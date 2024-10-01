@@ -1,0 +1,120 @@
+
+---
+title: "Using Environment Variables for Security in the webdav Package"
+author: "André Leite"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using Environment Variables for Security in the webdav Package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Why Environment Variables? Because Hardcoding Passwords is Like Leaving Your Keys in the Door!
+
+```{r, echo=FALSE, results = 'asis'}
+# Load fortunes to add some wisdom
+library(fortunes)
+fortune_text <- capture.output(fortune(106))  # Capture fortune output
+cat("> ", paste(fortune_text, collapse = "\n> "))  # Format as a quotation
+```
+
+So, you've got this fantastic `webdav` package, but you don’t want to leave your credentials hanging out in your R scripts. Enter: **Environment Variables**—the secret agents of secure credentials management.
+
+You set 'em once, and they protect your data like a ninja. And what’s best? They make it easier to keep your username and password out of your scripts and code repositories. That way, no more accidentally uploading your password to GitHub like you're tossing it into the wind!
+
+## Step 1: Setting Up Environment Variables
+
+### macOS and Linux Folks: You’re Basically Already There
+
+Just a few simple steps to protect your credentials:
+
+1. Open a terminal and find that trusty shell profile (e.g., `.bash_profile`, `.zshrc`, or `.bashrc`):
+   
+   ```bash
+   nano ~/.bash_profile  # or nano ~/.zshrc for zsh users
+   ```
+
+2. Stick this magic incantation at the bottom:
+   
+   ```bash
+   export OWNCLOUD_USERNAME="your_username"
+   export OWNCLOUD_PASSWORD="your_password"
+   ```
+
+3. Save and reload with:
+
+   ```bash
+   source ~/.bash_profile  # or source ~/.zshrc
+   ```
+
+Boom! Credentials are safe and sound in the shadows of your terminal. You’re now one step closer to keeping your secrets... secret.
+
+### Windows Users: You've Got This Too!
+
+If you're on Windows, it’s not as scary as it sounds—no need to dig through any `.bash_profile` here:
+
+1. Open **Start Menu** and search for "Environment Variables."
+2. Click **Edit the system environment variables**.
+3. In **System Properties**, click **Environment Variables**.
+4. Under **User variables**, create:
+   - **OWNCLOUD_USERNAME** with your username.
+   - **OWNCLOUD_PASSWORD** with your password.
+
+Now you're good to go! Next time you open R, those variables will be ready to protect your credentials.
+
+### Pro Tip: Use `.Renviron` for Project-Specific Vars
+
+Want project-specific secrets? Meet `.Renviron`. It’s like `.bash_profile`, but for R projects!
+
+1. Create a `.Renviron` file in your project directory:
+   
+   ```bash
+   OWNCLOUD_USERNAME=your_username
+   OWNCLOUD_PASSWORD=your_password
+   ```
+
+2. Done! These variables will pop up like magic whenever you use R in that project.
+
+## Step 2: Accessing Environment Variables in Your Code
+
+```{r, echo=FALSE, results = 'asis'}
+# Load fortunes to add some wisdom
+library(fortunes)
+fortune_text <- capture.output(fortune("password"))  # Capture fortune output
+cat("> ", paste(fortune_text, collapse = "\n> "))  # Format as a quotation
+```
+
+Here’s how you avoid the "hardcoding password trap." Instead of typing `username = "secret"` like it’s your first day with R, grab your credentials with `Sys.getenv()`:
+
+```r
+# Keep those secrets safe
+username <- Sys.getenv("OWNCLOUD_USERNAME")
+password <- Sys.getenv("OWNCLOUD_PASSWORD")
+
+# Use them securely in your webdav function calls
+webdav_upload_file(
+  base_url = "https://drive.expresso.pe.gov.br",
+  file_path = "local_file.txt",
+  upload_path = "/Shared/der/app_painel/data/",
+  dav = "0c75a584-017d-103a-9c84-d34d2e44200b",
+  username = username,
+  password = password
+)
+```
+
+See? No passwords hanging out in your code! It’s like you’re wearing an invisible cloak around your credentials.
+
+## Step 3: Don’t Forget `.gitignore`
+
+Don’t be that person who commits their `.Renviron` file to GitHub. Add `.Renviron` to your `.gitignore` file and keep it safe:
+
+```bash
+# .gitignore
+.Renviron
+```
+
+--- 
+
+**R Fortune** references used:
+- fortunes: R Fortunes. A collection of fortunes from the R community.
