@@ -166,6 +166,103 @@ webdav_copy_file <- function(base_url, from_path, to_path,
   })
 }
 
+#' Download a file from the WebDAV server
+#'
+#' This function downloads a file from the WebDAV server and saves it to a local directory.
+#' It validates the provided parameters, handles errors, and optionally prints detailed logs if requested.
+#'
+#' @param base_url The base URL of the WebDAV server (e.g., "https://example.com/remote.php/dav/files/").
+#' @param file_path The path of the file on the WebDAV server to download (relative to the `base_url`).
+#' @param destination_path The local directory where the downloaded file will be saved. Defaults to the current directory.
+#' @param username The username for WebDAV authentication. Defaults to the "WEBDAV_USERNAME" environment variable.
+#' @param password The password for WebDAV authentication. Defaults to the "WEBDAV_PASSWORD" environment variable.
+#' @param verbose Logical. If TRUE, prints detailed messages during the download process.
+#'
+#' @return Logical value indicating whether the file was downloaded successfully.
+#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
+#' @importFrom glue glue
+#' @importFrom stringr str_remove
+#' @importFrom magrittr %>%
+#' @examples
+#' # Example usage with a public WebDAV server.
+#' library(magrittr)
+#' library(httr2)
+#' test_server <- "https://www.webdavserver.com/" %>%
+#'   request() %>%
+#'   req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+#'   req_perform()
+#'
+#' # Download a file from the WebDAV server
+#' if (class(test_server) != "try-error")
+#'   webdav_download_file(base_url = test_server$url,
+#'     file_path = "Project.pdf",
+#'     destination_path = tempdir(),
+#'     verbose = TRUE)
+#' # Visit test_server$url to view the results of the operation.
+#' @export
+webdav_download_file <- function(base_url, file_path, destination_path = ".",
+                                 username = Sys.getenv("WEBDAV_USERNAME"),
+                                 password = Sys.getenv("WEBDAV_PASSWORD"),
+                                 verbose = FALSE) {
+  check_and_load_package("httr2")
+  check_and_load_package("glue")
+  check_and_load_package("stringr")
+
+  # Validar parâmetros
+  if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
+    stop("The 'base_url' parameter is required and must be a non-empty string.")
+  }
+
+  if (missing(file_path) || !is.character(file_path) || nchar(file_path) == 0) {
+    stop("The 'file_path' parameter is required and must be a non-empty string.")
+  }
+
+  # Definir caminho local completo
+  file_name <- basename(file_path)
+  local_path <- if (is.null(destination_path) || nchar(destination_path) == 0) {
+    glue::glue("./{ file_name }") # Diretório atual
+  } else {
+    glue::glue("{stringr::str_remove(destination_path, '/$')}/{ file_name }")
+  }
+
+  if (verbose) {
+    message("Base URL: ", base_url)
+    message("Downloading from: ", file_path, " to: ", local_path)
+  }
+
+  # Construir URL completo do arquivo no servidor WebDAV
+  tryCatch({
+    server_path <- glue::glue("{ stringr::str_remove(base_url, '/$') }/{ stringr::str_remove(file_path, '^/') }")
+
+    if (verbose) {
+      message("Server Path: ", server_path)
+      message("Local Destination Path: ", local_path)
+    }
+
+    # Criar requisição
+    req <- webdav_create_request(server_path, username, password, verbose)
+
+    # Executar requisição
+    response <- httr2::req_perform(req)
+
+    if (httr2::resp_status(response) %in% c(200, 201, 204)) {
+      if (verbose)
+        message("Resource successfully downloaded from ", server_path)
+      writeBin(object = httr2::resp_body_raw(response), con = local_path)
+      if (verbose)
+        message("Resource successfully written to ", local_path)
+      return(TRUE)
+    } else {
+      stop("Failed to download resource. Server responded with status: ", httr2::resp_status(response))
+    }
+
+  }, error = function(e) {
+    message("Error during the download process: ", e$message)
+    stop("Failed to download resource.")
+  })
+}
+
+
 #' Create a collection (directory) on a WebDAV server
 #'
 #' This function creates a collection (directory/folder) on the WebDAV server
