@@ -10,7 +10,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-## Why Environment Variables? Because Hardcoding Passwords is Like Leaving Your Keys in the Door!
+Why use environment variables? Because *hardcoding passwords* is like leaving your keys under the welcome mat!
 
 ```{r, echo=FALSE, results = 'asis'}
 # Load fortunes to add some wisdom
@@ -96,8 +96,7 @@ password <- Sys.getenv("OWNCLOUD_PASSWORD")
 webdav_upload_file(
   base_url = "https://drive.expresso.pe.gov.br",
   file_path = "local_file.txt",
-  upload_path = "/Shared/der/app_painel/data/",
-  dav = "0c75a584-017d-103a-9c84-d34d2e44200b",
+  server_path = "/Shared/der/app_painel/data/",
   username = username,
   password = password
 )
@@ -117,4 +116,5 @@ Don’t be that person who commits their `.Renviron` file to GitHub. Add `.Renvi
 --- 
 
 **R Fortune** references used:
-- fortunes: R Fortunes. A collection of fortunes from the R community.
+
+- `fortunes`: R Fortunes. A collection of fortunes from the R community.

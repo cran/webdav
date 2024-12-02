@@ -1,8 +1,8 @@
 Package: webdav
 Type: Package
 Title: A Simple Interface for Interacting with 'WebDAV' Servers
-Version: 0.1.1
-Date: 2024-10-07
+Version: 0.1.2
+Date: 2024-12-01
 Authors@R: c(
             person("Andre", "Leite", email = "leite@castlab.org", role = c("aut", "cre")),
             person("Hugo", "Vaconcelos", email = "hugo.vasconcelos@ufpe.br", role = "aut"),
@@ -17,13 +17,14 @@ VignetteBuilder: knitr
 License: GPL-3
 Encoding: UTF-8
 RoxygenNote: 7.3.2
-Suggests: testthat (>= 3.0.0), roxygen2, knitr, fortunes, rmarkdown
+Suggests: testthat (>= 3.0.0), roxygen2, knitr, fortunes, rmarkdown,
 URL: <https://github.com/StrategicProjects/webdav>
+Config/Needs/website: tidyverse/tidytemplate
 NeedsCompilation: no
-Packaged: 2024-10-07 13:31:39 UTC; leite
+Packaged: 2024-12-02 11:08:31 UTC; leite
 Author: Andre Leite [aut, cre],
   Hugo Vaconcelos [aut],
   Diogo Bezerra [aut]
 Maintainer: Andre Leite <leite@castlab.org>
 Repository: CRAN
-Date/Publication: 2024-10-08 13:10:01 UTC
+Date/Publication: 2024-12-02 11:30:02 UTC

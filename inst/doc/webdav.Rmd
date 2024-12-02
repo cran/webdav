@@ -1,0 +1,295 @@
+---
+title: "Get Started"
+author: "André Leite"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Get Started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+This overview introduces the `webdav` R package, which provides an interface for managing files on WebDAV-compliant servers, enabling file operations such as uploading, downloading, copying, moving, and deleting resources.
+
+## Functions
+
+### 1. Creating a WebDAV Request
+
+```r
+webdav_create_request(base_url, username, password, verbose = FALSE)
+```
+
+This function creates a basic authenticated WebDAV request for the given resource path on a WebDAV server. It sets up authentication using the provided username and password and returns a request object.
+
+**Parameters**:
+
+1. `base_url`: Base URL of the WebDAV server (e.g., `https://drive.expresso.pe.gov.br`).
+1. `username`: Username for authentication.
+1. `password`: Password for authentication.
+1. `verbose`: Whether to print debug information (default is `FALSE`).
+
+**Example**:
+
+```r
+# Example usage with a public WebDAV server.
+# Visit test_server$url link to view the results of the operation.
+library(magrittr)
+library(httr2)
+test_server <- "https://www.webdavserver.com/" %>%
+  request() %>%
+  req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+  req_perform() %>%
+  try(silent = TRUE)
+
+# Create a request
+if (class(test_server) != "try-error")
+  req <- webdav_create_request(base_url = test_server$url, verbose = TRUE)
+```
+
+### 2. Copying Files
+
+```r
+webdav_copy_file(base_url, from_path, to_path, username, password)
+```
+
+This function copies a file or directory from one path to another on a WebDAV server.
+
+**Parameters**:
+
+1. `base_url`: Base URL of the WebDAV server.
+1. `from_path`: The source file path to copy.
+1. `to_path`: The destination path where the file will be copied.
+1. `username`: Username for authentication.
+1. `password`: Password for authentication.
+
+**Example**:
+
+```r
+# Example usage with a public WebDAV server.
+# Visit test_server$url link to view the results of the operation.
+library(magrittr)
+library(httr2)
+test_server <- "https://www.webdavserver.com/" %>%
+  request() %>%
+  req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+  req_perform() %>%
+  try(silent = TRUE)
+
+# Copy a file from one path to another
+if (class(test_server) != "try-error")
+  webdav_copy_file(base_url = test_server$url,
+    from_path = "Project.pdf",
+    to_path = "New_Project.pdf",
+    verbose = TRUE)
+```
+
+### 3. Creating a Directory
+
+```r
+webdav_create_directory(base_url, folder_path, username, password)
+```
+
+This function creates a new directory (or collection) on the WebDAV server using the MKCOL method.
+
+**Parameters**:
+
+1. `base_url`: Base URL of the WebDAV server.
+1. `folder_path`: Path to the directory to be created.
+1. `username`: Username for authentication.
+1. `password`: Password for authentication.
+
+**Example**:
+
+```r
+# Example usage with a public WebDAV server.
+# Visit test_server$url link to view the results of the operation.
+library(magrittr)
+library(httr2)
+test_server <- "https://www.webdavserver.com/" %>%
+  request() %>%
+  req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+  req_perform() %>%
+  try(silent = TRUE)
+
+# Create a directory on the WebDAV server
+if (class(test_server) != "try-error")
+  webdav_create_directory(
+    base_url = test_server$url, 
+    folder_path = "Test_Folder", 
+    verbose = TRUE)
+```
+
+### 4. Deleting a File or Directory
+
+```r
+webdav_delete_resource(
+  base_url, 
+  resource_path, 
+  username, 
+  password, 
+  verbose = FALSE
+  )
+```
+
+This function deletes a file or directory from the WebDAV server using the DELETE method.
+
+**Parameters**:
+1. `base_url`: Base URL of the WebDAV server.
+1. `resource_path`: The path to the file or directory to delete.
+1. `username`: Username for authentication.
+1. `password`: Password for authentication.
+
+**Example**:
+
+```r
+# Example usage with a public WebDAV server.
+# Visit test_server$url link to view the results of the operation.
+library(magrittr)
+library(httr2)
+test_server <- "https://www.webdavserver.com/" %>%
+  request() %>%
+  req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+  req_perform() %>%
+  try(silent = TRUE)
+
+# Delete a file or directory
+if (class(test_server) != "try-error")
+  webdav_delete_resource(base_url = test_server$url, 
+  resource_path = "Notes.txt",
+  verbose = TRUE)
+```
+
+### 5. Listing Files in a Directory
+
+```r
+webdav_list_files(
+  base_url, 
+  folder_path, 
+  username, 
+  password, 
+  depth = 1, 
+  verbose = FALSE
+  )
+```
+
+This function lists the files within a directory on the WebDAV server using the PROPFIND method.
+
+**Parameters**:
+
+1. `base_url`: Base URL of the WebDAV server.
+1. `folder_path`: Path to the folder to list files.
+1. `username`: Username for authentication.
+1. `password`: Password for authentication.
+1. `depth`: Depth of the PROPFIND request (default is `1`).
+
+**Example**:
+
+```r
+# Example usage with a public WebDAV server.
+# Visit test_server$url link to view the results of the operation.
+library(magrittr)
+library(httr2)
+test_server <- "https://www.webdavserver.com/" %>%
+  request() %>%
+  req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+  req_perform() %>%
+  try(silent = TRUE)
+
+# List files in a directory
+if (class(test_server) != "try-error")
+  webdav_list_files(
+    base_url = test_server$url, 
+    folder_path = "Sales/", 
+    verbose = TRUE)
+```
+
+### 6. Uploading a File
+
+```r
+webdav_upload_file(
+  base_url, 
+  local_path, 
+  server_path, 
+  username, 
+  password, 
+  timeout = 300,
+  verbose = FALSE
+  )
+```
+
+This function uploads a local file to the WebDAV server.
+
+**Parameters**:
+
+1. `base_url`: Base URL of the WebDAV server.
+1. `local_path`: Local path to the file.
+1. `server_path`: Path on the WebDAV server where the file will be uploaded.
+1. `username`: Username for authentication.
+1. `password`: Password for authentication.
+1. `timeout`: Time limit for the upload operation (default is 300 seconds).
+
+**Example**:
+
+```r
+# Example usage with a public WebDAV server.
+# Visit test_server$url link to view the results of the operation.
+library(magrittr)
+library(httr2)
+test_server <- "https://www.webdavserver.com/" %>%
+  request() %>%
+  req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+  req_perform() %>%
+  try(silent = TRUE)
+
+# Upload a file
+file_test <- tempfile(pattern = "teste_", fileext = ".txt")
+cat("Text file content", file = file_test)
+if (class(test_server) != "try-error")
+  webdav_upload_file(base_url = test_server$url, local_path = file_test, verbose = TRUE)
+```
+
+### 7. Download a file 
+
+```r
+webdav_download_file(base_url, file_path, destination_path, username, password, verbose)
+```
+
+This function downloads a file from the WebDAV server and saves it to a local directory. It validates the provided parameters, handles errors, and optionally prints detailed logs if requested.
+
+**Parameters**:
+
+1. `base_url`: The base URL of the WebDAV server.
+1. `file_path`: The path of the file on the WebDAV server to download (relative to the 'base_url').
+1. `destination_path`: The local directory where the downloaded file will be saved. Defaults to the current directory.
+1. `username`: The username for WebDAV authentication. Defaults to the "WEBDAV_USERNAME" environment variable.
+1. `password`: The password for WebDAV authentication. Defaults to the "WEBDAV_PASSWORD" environment variable.
+1. `verbose`: 	Logical. If TRUE, prints detailed messages during the download process.
+
+**Example**:
+
+```r
+# Example usage with a public WebDAV server.
+library(magrittr)
+library(httr2)
+test_server <- "https://www.webdavserver.com/" %>%
+  request() %>%
+  req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+  req_perform()
+
+# Download a file from the WebDAV server
+if (class(test_server) != "try-error")
+  webdav_download_file(base_url = test_server$url,
+    file_path = "Project.pdf",
+    destination_path = tempdir(),
+    verbose = TRUE)
+# Visit test_server$url to view the results of the operation.
+```
+
+## Conclusion
+
+The **`webdav`** R package provides a interface for managing files and directories on WebDAV-enabled servers. With basic file management (uploading, downloading, deleting, copying), directory management, and resource locking, the package simplifies interactions with platforms like **OwnCloud**, **NextCloud**, and other WebDAV-compliant systems.
