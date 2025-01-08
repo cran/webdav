@@ -453,7 +453,14 @@ webdav_upload_file <- function(base_url,
 #' @param depth The depth of the PROPFIND request (default is 1).
 #' @param verbose Logical value indicating whether to print detailed debug messages. When TRUE, the function outputs additional information about its progress and actions.
 #'
-#' @return A tibble with the file names and paths relative to the folder, or NULL if an error occurs.
+#' @return A tibble containing:
+#' \describe{
+#'   \item{file_name}{The name of the file.}
+#'   \item{relative_path}{The path of the file relative to the specified folder.}
+#'   \item{lastmodified}{The date and time when the file was last modified.}
+#'   \item{content_length}{The size of the file in bytes.}
+#' }
+#' Returns `NULL` if an error occurs during the execution of the function.
 #' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
 #' @importFrom glue glue
 #' @importFrom dplyr filter mutate select arrange slice_tail
@@ -521,6 +528,8 @@ webdav_list_files <- function(
 
     # Handle response and parse XML
     if (httr2::resp_status(response) < 400) {
+      ##### https://github.com/StrategicProjects/webdav/issues/1
+      ##### Code from Benjamin Buchwitz (bchwtz) patch
       content <- response %>% httr2::resp_body_string()
       xml_content <- xml2::read_xml(content)
 
@@ -529,12 +538,28 @@ webdav_list_files <- function(
         xml2::xml_text() %>%
         httpuv::decodeURI()
 
+      lastmodified <- xml_content %>%
+        xml2::xml_find_all(".//d:getlastmodified") %>%
+        xml2::xml_text() %>%
+        httpuv::decodeURI()
+
+      contentlength <- xml_content %>%
+        xml2::xml_find_all(".//d:getcontentlength") %>%
+        xml2::xml_text() %>%
+        httpuv::decodeURI() %>%
+        as.numeric()
+
+      contentlength <- c(NA, contentlength) # Add NA as contentlength value for the folder
+
       # Process and filter files, skipping the first entry (root or folder itself)
       contents <- tibble::tibble(
         contents = stringr::str_remove(raw, raw[1]), # Remove the first entry, which is the folder itself
-        full_path = raw
+        full_path = raw,
+        last_modified = lastmodified,
+        content_length = contentlength
       ) %>%
-        slice_tail(n = -1) # Remove the first entry, which is the folder or root itself
+        slice_tail(n = -1)
+      #######
 
       if (verbose) {
         message("Files listed successfully.")

@@ -9,3 +9,7 @@
   - Verbose mode (`verbose = TRUE`) provides detailed output of the download process, including the file path on the server and local destination.
   
 * Added examples using demo WebDav server.  
+
+# webdav 0.1.3
+
+* Expose lastmodified and contentlength via webdav_list_files. Idea from Benjamin Buchwitz (bchwtz) issue: https://github.com/StrategicProjects/webdav/issues/1 

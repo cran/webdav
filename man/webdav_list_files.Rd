@@ -27,7 +27,14 @@ webdav_list_files(
 \item{verbose}{Logical value indicating whether to print detailed debug messages. When TRUE, the function outputs additional information about its progress and actions.}
 }
 \value{
-A tibble with the file names and paths relative to the folder, or NULL if an error occurs.
+A tibble containing:
+\describe{
+  \item{file_name}{The name of the file.}
+  \item{relative_path}{The path of the file relative to the specified folder.}
+  \item{lastmodified}{The date and time when the file was last modified.}
+  \item{content_length}{The size of the file in bytes.}
+}
+Returns `NULL` if an error occurs during the execution of the function.
 }
 \description{
 This function lists the files in a specific folder on the WebDAV server. If no folder path is provided, it lists files from the root directory. The function validates the provided parameters and handles errors during the process.
