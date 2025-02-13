@@ -33,21 +33,3 @@ Logical value indicating whether the resource was copied successfully.
 This function copies a resource from one URI to another on the WebDAV server using the COPY method.
 It validates the provided parameters and handles errors during the copy process.
 }
-\examples{
-# Example usage with a public WebDAV server.
-# Visit test_server$url link to view the results of the operation.
-library(magrittr)
-library(httr2)
-test_server <- "https://www.webdavserver.com/" \%>\%
-  request() \%>\%
-  req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) \%>\%
-  req_perform() \%>\%
-  try(silent = TRUE)
-
-# Copy a file from one path to another
-if (class(test_server) != "try-error")
-  webdav_copy_file(base_url = test_server$url,
-    from_path = "Project.pdf",
-    to_path = "New_Project.pdf",
-    verbose = TRUE)
-}

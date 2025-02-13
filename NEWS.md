@@ -1,6 +1,12 @@
-# webdav 0.1.1
+# webdav 0.1.4
 
-* Added a `NEWS.md` file to track changes to the package.
+*	Changed the license to MIT
+*	Adjusted the time limits in the examples
+* Added an internet connection test to ensure network availability
+
+# webdav 0.1.3
+
+* Expose lastmodified and contentlength via webdav_list_files. Idea from Benjamin Buchwitz (bchwtz) issue: https://github.com/StrategicProjects/webdav/issues/1 
 
 # webdav 0.1.2
 
@@ -10,6 +16,6 @@
   
 * Added examples using demo WebDav server.  
 
-# webdav 0.1.3
+# webdav 0.1.1
 
-* Expose lastmodified and contentlength via webdav_list_files. Idea from Benjamin Buchwitz (bchwtz) issue: https://github.com/StrategicProjects/webdav/issues/1 
+* Added a `NEWS.md` file to track changes to the package.

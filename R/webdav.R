@@ -18,7 +18,7 @@
 #' library(httr2)
 #' test_server <- "https://www.webdavserver.com/" %>%
 #'   request() %>%
-#'   req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
 #'   req_perform() %>%
 #'   try(silent = TRUE)
 #'
@@ -30,6 +30,7 @@ webdav_create_request <- function(base_url,
                                   username = Sys.getenv("WEBDAV_USERNAME"),
                                   password = Sys.getenv("WEBDAV_PASSWORD"),
                                   verbose = FALSE) {
+
   check_and_load_package("httr2")
 
   # Validate base_url
@@ -87,28 +88,17 @@ webdav_create_request <- function(base_url,
 #' @importFrom glue glue
 #' @importFrom stringr str_remove
 #' @importFrom magrittr %>%
-#' @examples
-#' # Example usage with a public WebDAV server.
-#' # Visit test_server$url link to view the results of the operation.
-#' library(magrittr)
-#' library(httr2)
-#' test_server <- "https://www.webdavserver.com/" %>%
-#'   request() %>%
-#'   req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
-#'   req_perform() %>%
-#'   try(silent = TRUE)
-#'
-#' # Copy a file from one path to another
-#' if (class(test_server) != "try-error")
-#'   webdav_copy_file(base_url = test_server$url,
-#'     from_path = "Project.pdf",
-#'     to_path = "New_Project.pdf",
-#'     verbose = TRUE)
 #' @export
 webdav_copy_file <- function(base_url, from_path, to_path,
                              username = Sys.getenv("WEBDAV_USERNAME"),
                              password = Sys.getenv("WEBDAV_PASSWORD"),
                              verbose = FALSE) {
+
+  if (!curl::has_internet()) {
+    message("No internet connection detected. You need an internet connection to use this function.")
+    return(invisible(NULL))  # R
+  }
+
   check_and_load_package("httr2")
   check_and_load_package("glue")
   check_and_load_package("stringr")
@@ -189,7 +179,7 @@ webdav_copy_file <- function(base_url, from_path, to_path,
 #' library(httr2)
 #' test_server <- "https://www.webdavserver.com/" %>%
 #'   request() %>%
-#'   req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
 #'   req_perform()
 #'
 #' # Download a file from the WebDAV server
@@ -204,6 +194,13 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
                                  username = Sys.getenv("WEBDAV_USERNAME"),
                                  password = Sys.getenv("WEBDAV_PASSWORD"),
                                  verbose = FALSE) {
+
+  if (!curl::has_internet()) {
+    message("No internet connection detected. You need an internet connection to use this function.")
+    return(invisible(NULL))  # R
+  }
+
+
   check_and_load_package("httr2")
   check_and_load_package("glue")
   check_and_load_package("stringr")
@@ -288,7 +285,7 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
 #' library(httr2)
 #' test_server <- "https://www.webdavserver.com/" %>%
 #'   request() %>%
-#'   req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
 #'   req_perform() %>%
 #'   try(silent = TRUE)
 #'
@@ -300,6 +297,12 @@ webdav_create_directory <- function(base_url, folder_path,
                                     username = Sys.getenv("WEBDAV_USERNAME"),
                                     password = Sys.getenv("WEBDAV_PASSWORD"),
                                     verbose = FALSE) {
+
+  if (!curl::has_internet()) {
+    message("No internet connection detected. You need an internet connection to use this function.")
+    return(invisible(NULL))  # R
+  }
+
   check_and_load_package("httr2")
   check_and_load_package("glue")
   check_and_load_package("stringr")
@@ -369,7 +372,7 @@ webdav_create_directory <- function(base_url, folder_path,
 #' library(httr2)
 #' test_server <- "https://www.webdavserver.com/" %>%
 #'   request() %>%
-#'   req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
 #'   req_perform() %>%
 #'   try(silent = TRUE)
 #'
@@ -386,6 +389,12 @@ webdav_upload_file <- function(base_url,
                                password = Sys.getenv("WEBDAV_PASSWORD"),
                                timeout = 300,
                                verbose = FALSE) {
+
+  if (!curl::has_internet()) {
+    message("No internet connection detected. You need an internet connection to use this function.")
+    return(invisible(NULL))  # R
+  }
+
   check_and_load_package("httr2")
   check_and_load_package("glue")
   check_and_load_package("stringr")
@@ -476,13 +485,14 @@ webdav_upload_file <- function(base_url,
 #' library(httr2)
 #' test_server <- "https://www.webdavserver.com/" %>%
 #'   request() %>%
-#'   req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
 #'   req_perform() %>%
 #'   try(silent = TRUE)
 #'
 #' # List files in a directory
 #' if (class(test_server) != "try-error")
 #'   webdav_list_files(base_url = test_server$url, folder_path = "Sales/", verbose = TRUE)
+#'
 #' @export
 webdav_list_files <- function(
     base_url,
@@ -492,12 +502,19 @@ webdav_list_files <- function(
     depth = 1,
     verbose = FALSE) {
 
+  if (!curl::has_internet()) {
+    message("No internet connection detected. You need an internet connection to use this function.")
+    return(invisible(NULL))  # R
+  }
+
+
   check_and_load_package("httr2")
   check_and_load_package("xml2")
   check_and_load_package("stringr")
   check_and_load_package("dplyr")
   check_and_load_package("tibble")
   check_and_load_package("httpuv")
+
 
   # Validate base_url
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
@@ -598,7 +615,7 @@ webdav_list_files <- function(
 #' library(httr2)
 #' test_server <- "https://www.webdavserver.com/" %>%
 #'   request() %>%
-#'   req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) %>%
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
 #'   req_perform() %>%
 #'   try(silent = TRUE)
 #'
@@ -610,6 +627,12 @@ webdav_delete_resource <- function(base_url, resource_path,
                                    username = Sys.getenv("WEBDAV_USERNAME"),
                                    password = Sys.getenv("WEBDAV_PASSWORD"),
                                    verbose = FALSE) {
+
+  if (!curl::has_internet()) {
+    message("No internet connection detected. You need an internet connection to use this function.")
+    return(invisible(NULL))  # R
+  }
+
   # Load necessary packages
   check_and_load_package("httr2")
   check_and_load_package("glue")

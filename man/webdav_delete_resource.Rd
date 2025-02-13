@@ -36,7 +36,7 @@ library(magrittr)
 library(httr2)
 test_server <- "https://www.webdavserver.com/" \%>\%
   request() \%>\%
-  req_retry(max_tries = 3, max_seconds = 4, backoff =  ~ 1) \%>\%
+  req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) \%>\%
   req_perform() \%>\%
   try(silent = TRUE)
 
