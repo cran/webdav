@@ -180,7 +180,8 @@ webdav_copy_file <- function(base_url, from_path, to_path,
 #' test_server <- "https://www.webdavserver.com/" %>%
 #'   request() %>%
 #'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
-#'   req_perform()
+#'   req_perform() %>%
+#'   try(silent = TRUE)
 #'
 #' # Download a file from the WebDAV server
 #' if (class(test_server) != "try-error")
