@@ -35,12 +35,11 @@ It validates the provided parameters, handles errors, and optionally prints deta
 }
 \examples{
 # Example usage with a public WebDAV server.
-library(magrittr)
 library(httr2)
-test_server <- "https://www.webdavserver.com/" \%>\%
-  request() \%>\%
-  req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) \%>\%
-  req_perform() \%>\%
+test_server <- "http://webdavserver.net/" |>
+  request() |>
+  req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+  req_perform() |>
   try(silent = TRUE)
 
 # Download a file from the WebDAV server

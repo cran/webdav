@@ -1,3 +1,19 @@
+# webdav 0.1.6
+
+## Enhancements
+
+- Major improvements to the `webdav_list_files()` function for better compatibility and robustness:
+  - Now dynamically detects and uses the correct XML namespace prefix from the server (`d`, `D`, or other), preventing XPath errors like `Undefined namespace prefix`.
+  - Uses `xml2::as_list()` to reliably parse the XML response structure.
+  - Ensures `content_length` is safely parsed and padded with `NA` where missing (e.g., for directories), preventing errors when creating the resulting `tibble`.
+  - Adds a new field `is_folder`, correctly identifying whether each resource is a directory.
+  - Improved documentation and output consistency with more informative column names (e.g., `display_name`, `full_path`, `creation_date`, etc.).
+
+## Acknowledgements
+
+Special thanks to **Adrian Jusepeitis** (University of Jena, Germany) for reporting two key issues related to XML namespace parsing and missing metadata in `webdav_list_files()`, and for proposing initial fixes that inspired the improvements in this release.
+
+
 # webdav 0.1.4
 
 *	Changed the license to MIT

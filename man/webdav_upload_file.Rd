@@ -38,12 +38,11 @@ This function uploads a file to a specific folder on the WebDAV server. It valid
 \examples{
 # Example usage with a public WebDAV server.
 # Visit test_server$url link to view the results of the operation.
-library(magrittr)
 library(httr2)
-test_server <- "https://www.webdavserver.com/" \%>\%
-  request() \%>\%
-  req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) \%>\%
-  req_perform() \%>\%
+test_server <- "http://webdavserver.net/" |>
+  request() |>
+  req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+  req_perform() |>
   try(silent = TRUE)
 
 # Upload a file

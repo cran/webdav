@@ -10,16 +10,14 @@
 #'
 #' @return An `httr2_request` object with authentication and base URL configured, or an error message if the connection fails.
 #' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
-#' @importFrom magrittr %>%
 #' @examples
 #' # Example usage with a public WebDAV server.
 #' # Visit test_server$url link to view the results of the operation.
-#' library(magrittr)
 #' library(httr2)
-#' test_server <- "https://www.webdavserver.com/" %>%
-#'   request() %>%
-#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
-#'   req_perform() %>%
+#' test_server <- "http://webdavserver.net/" |>
+#'   request() |>
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+#'   req_perform() |>
 #'   try(silent = TRUE)
 #'
 #' # Create a request
@@ -53,7 +51,7 @@ webdav_create_request <- function(base_url,
 
     # Add basic authentication if username and password are provided
     if (username != "" && password != "") {
-      req <- req %>%
+      req <- req |>
         httr2::req_auth_basic(username, password)
 
       if (verbose) {
@@ -87,7 +85,6 @@ webdav_create_request <- function(base_url,
 #' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
 #' @importFrom glue glue
 #' @importFrom stringr str_remove
-#' @importFrom magrittr %>%
 #' @export
 webdav_copy_file <- function(base_url, from_path, to_path,
                              username = Sys.getenv("WEBDAV_USERNAME"),
@@ -135,12 +132,12 @@ webdav_copy_file <- function(base_url, from_path, to_path,
     req <- webdav_create_request(s_path, username, password, verbose)
 
     # Set the Destination header and use the COPY method
-    req <- req %>%
-      httr2::req_headers(Destination = d_path) %>%
+    req <- req |>
+      httr2::req_headers(Destination = d_path) |>
       httr2::req_method("COPY")
 
     # Perform the request and handle the response
-    response <- req %>%
+    response <- req |>
       httr2::req_perform()
 
     if (httr2::resp_status(response) %in% c(200, 201, 204)) {
@@ -172,15 +169,13 @@ webdav_copy_file <- function(base_url, from_path, to_path,
 #' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
 #' @importFrom glue glue
 #' @importFrom stringr str_remove
-#' @importFrom magrittr %>%
 #' @examples
 #' # Example usage with a public WebDAV server.
-#' library(magrittr)
 #' library(httr2)
-#' test_server <- "https://www.webdavserver.com/" %>%
-#'   request() %>%
-#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
-#'   req_perform() %>%
+#' test_server <- "http://webdavserver.net/" |>
+#'   request() |>
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+#'   req_perform() |>
 #'   try(silent = TRUE)
 #'
 #' # Download a file from the WebDAV server
@@ -277,17 +272,15 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
 #' @importFrom glue glue
 #' @importFrom httpuv encodeURI
 #' @importFrom stringr str_remove
-#' @importFrom magrittr %>%
 #' @examples
 #'
 #' # Example usage with a public WebDAV server.
 #' # Visit test_server$url link to view the results of the operation.
-#' library(magrittr)
 #' library(httr2)
-#' test_server <- "https://www.webdavserver.com/" %>%
-#'   request() %>%
-#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
-#'   req_perform() %>%
+#' test_server <- "http://webdavserver.net/" |>
+#'   request() |>
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+#'   req_perform() |>
 #'   try(silent = TRUE)
 #'
 #' # Create a directory on the WebDAV server
@@ -329,11 +322,11 @@ webdav_create_directory <- function(base_url, folder_path,
     req <- webdav_create_request(path, username, password, verbose)
 
     # Set the MKCOL method to create the directory
-    req <- req %>%
+    req <- req |>
       httr2::req_method("MKCOL")
 
     # Perform the request and handle the response
-    response <- req %>%
+    response <- req |>
       httr2::req_perform()
 
     # Check if the response indicates success
@@ -369,12 +362,11 @@ webdav_create_directory <- function(base_url, folder_path,
 #' @examples
 #' # Example usage with a public WebDAV server.
 #' # Visit test_server$url link to view the results of the operation.
-#' library(magrittr)
 #' library(httr2)
-#' test_server <- "https://www.webdavserver.com/" %>%
-#'   request() %>%
-#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
-#'   req_perform() %>%
+#' test_server <- "http://webdavserver.net/" |>
+#'   request() |>
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+#'   req_perform() |>
 #'   try(silent = TRUE)
 #'
 #' # Upload a file
@@ -429,13 +421,13 @@ webdav_upload_file <- function(base_url,
   tryCatch({
     raw_file <- readBin(local_path, what = "raw", n = file.info(local_path)$size)
 
-    req <- webdav_create_request(path, username, password, verbose) %>%
-      httr2::req_body_raw(raw_file) %>%
-      httr2::req_method("PUT") %>%
+    req <- webdav_create_request(path, username, password, verbose) |>
+      httr2::req_body_raw(raw_file) |>
+      httr2::req_method("PUT") |>
       httr2::req_options(timeout = timeout)
 
     # Perform the upload request
-    response <- req %>%
+    response <- req |>
       httr2::req_perform()
 
     # Check the response for success
@@ -465,29 +457,31 @@ webdav_upload_file <- function(base_url,
 #'
 #' @return A tibble containing:
 #' \describe{
-#'   \item{file_name}{The name of the file.}
-#'   \item{relative_path}{The path of the file relative to the specified folder.}
-#'   \item{lastmodified}{The date and time when the file was last modified.}
-#'   \item{content_length}{The size of the file in bytes.}
+#'   \item{display_name}{The name of the file or directory.}
+#'   \item{full_path}{The full URL (href) of the resource.}
+#'   \item{creation_date}{The date the resource was created.}
+#'   \item{last_modified}{The date the resource was last modified.}
+#'   \item{content_length}{The size of the resource in bytes (NA for directories).}
+#'   \item{is_folder}{Logical indicating whether the resource is a directory.}
 #' }
 #' Returns `NULL` if an error occurs during the execution of the function.
 #' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
 #' @importFrom glue glue
-#' @importFrom dplyr filter mutate select arrange slice_tail
+#' @importFrom dplyr filter mutate select arrange slice_tail first
+#' @importFrom tidyr replace_na
+#' @importFrom purrr map_dfr
 #' @importFrom stringr str_detect str_remove
 #' @importFrom xml2 read_xml xml_find_all xml_text
 #' @importFrom httpuv encodeURI decodeURI
 #' @importFrom tibble tibble
-#' @importFrom magrittr %>%
 #' @examples
 #' # Example usage with a public WebDAV server.
 #' # Visit test_server$url link to view the results of the operation.
-#' library(magrittr)
 #' library(httr2)
-#' test_server <- "https://www.webdavserver.com/" %>%
-#'   request() %>%
-#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
-#'   req_perform() %>%
+#' test_server <- "http://webdavserver.net/" |>
+#'   request() |>
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+#'   req_perform() |>
 #'   try(silent = TRUE)
 #'
 #' # List files in a directory
@@ -536,48 +530,42 @@ webdav_list_files <- function(
 
   # Try to list files in the folder
   tryCatch({
-    req <- webdav_create_request(path, username, password, verbose) %>%
-      httr2::req_method("PROPFIND") %>%
+    req <- webdav_create_request(path, username, password, verbose) |>
+      httr2::req_method("PROPFIND") |>
       httr2::req_headers("Depth" = as.character(depth))
 
     # Perform the request
-    response <- req %>%
+    response <- req |>
       httr2::req_perform()
 
     # Handle response and parse XML
     if (httr2::resp_status(response) < 400) {
       ##### https://github.com/StrategicProjects/webdav/issues/1
       ##### Code from Benjamin Buchwitz (bchwtz) patch
-      content <- response %>% httr2::resp_body_string()
+      content <- response |> httr2::resp_body_string()
       xml_content <- xml2::read_xml(content)
 
-      raw <- xml_content %>%
-        xml2::xml_find_all(".//d:href") %>%
-        xml2::xml_text() %>%
-        httpuv::decodeURI()
+      ns <- xml2::xml_ns(xml_content)
+      xml_prefix <- names(ns[ns == "DAV:"])
 
-      lastmodified <- xml_content %>%
-        xml2::xml_find_all(".//d:getlastmodified") %>%
-        xml2::xml_text() %>%
-        httpuv::decodeURI()
-
-      contentlength <- xml_content %>%
-        xml2::xml_find_all(".//d:getcontentlength") %>%
-        xml2::xml_text() %>%
-        httpuv::decodeURI() %>%
-        as.numeric()
-
-      contentlength <- c(NA, contentlength) # Add NA as contentlength value for the folder
+      webdav_list <- xml_content |>
+        xml2::xml_find_all(glue::glue(".//{ xml_prefix }:response"), ns, flatten = FALSE) |>
+        xml2::as_list()
 
       # Process and filter files, skipping the first entry (root or folder itself)
-      contents <- tibble::tibble(
-        contents = stringr::str_remove(raw, raw[1]), # Remove the first entry, which is the folder itself
-        full_path = raw,
-        last_modified = lastmodified,
-        content_length = contentlength
-      ) %>%
+      contents <- purrr::map_dfr(webdav_list, function(x) {
+        props <- x$propstat$prop
+        tibble(
+          full_path = httpuv::decodeURI(x$href[[1]]) %||% NA_character_,
+          creation_date = props$creationdate[[1]] %||% NA_character_,
+          last_modified = props$getlastmodified[[1]] %||% NA_character_,
+          content_length = as.numeric(props$getcontentlength[[1]] %||% NA),
+          is_folder = !is.null(props$resourcetype$collection) || props$isFolder[[1]] %in% c("1", "t")
+        )
+      }) |>
+        mutate(is_folder = tidyr::replace_na(is_folder, FALSE)) |>
+        mutate(display_name = stringr::str_remove(full_path, dplyr::first(full_path)), .before = full_path) |>
         slice_tail(n = -1)
-      #######
 
       if (verbose) {
         message("Files listed successfully.")
@@ -608,16 +596,14 @@ webdav_list_files <- function(
 #' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
 #' @importFrom glue glue
 #' @importFrom stringr str_remove
-#' @importFrom magrittr %>%
 #' @examples
 #' # Example usage with a public WebDAV server.
 #' # Visit test_server$url link to view the results of the operation.
-#' library(magrittr)
 #' library(httr2)
-#' test_server <- "https://www.webdavserver.com/" %>%
-#'   request() %>%
-#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) %>%
-#'   req_perform() %>%
+#' test_server <- "http://webdavserver.net/" |>
+#'   request() |>
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+#'   req_perform() |>
 #'   try(silent = TRUE)
 #'
 #' # Delete a file or directory
@@ -657,11 +643,11 @@ webdav_delete_resource <- function(base_url, resource_path,
 
   # Create and perform the DELETE request
   tryCatch({
-    req <- webdav_create_request(path, username, password, verbose) %>%
+    req <- webdav_create_request(path, username, password, verbose) |>
       httr2::req_method("DELETE")
 
     # Perform the request
-    response <- req %>%
+    response <- req |>
       httr2::req_perform()
 
     # Check response and determine success

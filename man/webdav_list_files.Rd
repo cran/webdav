@@ -29,10 +29,12 @@ webdav_list_files(
 \value{
 A tibble containing:
 \describe{
-  \item{file_name}{The name of the file.}
-  \item{relative_path}{The path of the file relative to the specified folder.}
-  \item{lastmodified}{The date and time when the file was last modified.}
-  \item{content_length}{The size of the file in bytes.}
+  \item{display_name}{The name of the file or directory.}
+  \item{full_path}{The full URL (href) of the resource.}
+  \item{creation_date}{The date the resource was created.}
+  \item{last_modified}{The date the resource was last modified.}
+  \item{content_length}{The size of the resource in bytes (NA for directories).}
+  \item{is_folder}{Logical indicating whether the resource is a directory.}
 }
 Returns `NULL` if an error occurs during the execution of the function.
 }
@@ -42,12 +44,11 @@ This function lists the files in a specific folder on the WebDAV server. If no f
 \examples{
 # Example usage with a public WebDAV server.
 # Visit test_server$url link to view the results of the operation.
-library(magrittr)
 library(httr2)
-test_server <- "https://www.webdavserver.com/" \%>\%
-  request() \%>\%
-  req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) \%>\%
-  req_perform() \%>\%
+test_server <- "http://webdavserver.net/" |>
+  request() |>
+  req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+  req_perform() |>
   try(silent = TRUE)
 
 # List files in a directory
