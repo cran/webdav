@@ -10,7 +10,7 @@ handle_response(response)
 \item{response}{The response object from an `httr2` request.}
 }
 \value{
-The processed response content if successful, or an error if the request failed.
+The processed response object if successful, or an error if the request failed.
 }
 \description{
 This function processes the response from the WebDAV server, checking for errors.

@@ -29,16 +29,14 @@ webdav_create_request <- function(base_url,
                                   password = Sys.getenv("WEBDAV_PASSWORD"),
                                   verbose = FALSE) {
 
-  check_and_load_package("httr2")
-
   # Validate base_url
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
-    stop("The 'base_url' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg base_url} parameter is required and must be a non-empty string.")
   }
 
   if (verbose) {
-    message("Base URL: ", base_url)
-    message("Username: ", ifelse(username != "", username, "Not provided"))
+    cli::cli_inform(c("i" = "Base URL: {.url {base_url}}"))
+    cli::cli_inform(c("i" = "Username: {.val {ifelse(username != '', username, 'Not provided')}}"))
   }
 
   # Create the request object
@@ -46,7 +44,7 @@ webdav_create_request <- function(base_url,
     req <- httr2::request(httpuv::encodeURI(base_url))
 
     if (verbose) {
-      message("Request object created successfully.")
+      cli::cli_inform(c("v" = "Request object created successfully."))
     }
 
     # Add basic authentication if username and password are provided
@@ -55,17 +53,16 @@ webdav_create_request <- function(base_url,
         httr2::req_auth_basic(username, password)
 
       if (verbose) {
-        message("Basic authentication added.")
+        cli::cli_inform(c("v" = "Basic authentication added."))
       }
     } else if (verbose) {
-      message("No authentication added.")
+      cli::cli_inform(c("!" = "No authentication added."))
     }
 
     return(req)
 
   }, error = function(e) {
-    message("Error creating request: ", e$message)
-    stop("Failed to create WebDAV request.")
+    cli::cli_abort("Failed to create WebDAV request: {e$message}")
   })
 }
 
@@ -92,30 +89,27 @@ webdav_copy_file <- function(base_url, from_path, to_path,
                              verbose = FALSE) {
 
   if (!curl::has_internet()) {
-    message("No internet connection detected. You need an internet connection to use this function.")
+    cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
     return(invisible(NULL))  # R
   }
 
-  check_and_load_package("httr2")
-  check_and_load_package("glue")
-  check_and_load_package("stringr")
 
   # Validate parameters
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
-    stop("The 'base_url' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg base_url} parameter is required and must be a non-empty string.")
   }
 
   if (missing(from_path) || !is.character(from_path) || nchar(from_path) == 0) {
-    stop("The 'from_path' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg from_path} parameter is required and must be a non-empty string.")
   }
 
   if (missing(to_path) || !is.character(to_path) || nchar(to_path) == 0) {
-    stop("The 'to_path' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg to_path} parameter is required and must be a non-empty string.")
   }
 
   if (verbose) {
-    message("Base URL: ", base_url)
-    message("Copying from: ", from_path, " to: ", to_path)
+    cli::cli_inform(c("i" = "Base URL: {.url {base_url}}"))
+    cli::cli_inform(c("i" = "Copying from: {.path {from_path}} to: {.path {to_path}}"))
   }
 
   # Create the source and destination paths
@@ -124,8 +118,8 @@ webdav_copy_file <- function(base_url, from_path, to_path,
     d_path <- glue::glue("{ stringr::str_remove(base_url, '/$') }/{ to_path }")
 
     if (verbose) {
-      message("Source Path: ", s_path)
-      message("Destination Path: ", d_path)
+      cli::cli_inform(c("i" = "Source Path: {.url {s_path}}"))
+      cli::cli_inform(c("i" = "Destination Path: {.url {d_path}}"))
     }
 
     # Create the base request using the previously created function
@@ -141,15 +135,14 @@ webdav_copy_file <- function(base_url, from_path, to_path,
       httr2::req_perform()
 
     if (httr2::resp_status(response) %in% c(200, 201, 204)) {
-      message("Resource successfully copied from ", from_path, " to ", to_path)
+      cli::cli_alert_success("Resource successfully copied from {.path {from_path}} to {.path {to_path}}")
       return(TRUE)
     } else {
-      stop("Failed to copy resource. Server responded with status: ", httr2::resp_status(response))
+      cli::cli_abort("Failed to copy resource. Server responded with status: {httr2::resp_status(response)}")
     }
 
   }, error = function(e) {
-    message("Error during the copy process: ", e$message)
-    stop("Failed to copy resource.")
+    cli::cli_abort("Error during the copy process: {e$message}")
   })
 }
 
@@ -192,22 +185,18 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
                                  verbose = FALSE) {
 
   if (!curl::has_internet()) {
-    message("No internet connection detected. You need an internet connection to use this function.")
+    cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
     return(invisible(NULL))  # R
   }
 
 
-  check_and_load_package("httr2")
-  check_and_load_package("glue")
-  check_and_load_package("stringr")
-
   # Validar parâmetros
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
-    stop("The 'base_url' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg base_url} parameter is required and must be a non-empty string.")
   }
 
   if (missing(file_path) || !is.character(file_path) || nchar(file_path) == 0) {
-    stop("The 'file_path' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg file_path} parameter is required and must be a non-empty string.")
   }
 
   # Definir caminho local completo
@@ -219,8 +208,8 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
   }
 
   if (verbose) {
-    message("Base URL: ", base_url)
-    message("Downloading from: ", file_path, " to: ", local_path)
+    cli::cli_inform(c("i" = "Base URL: {.url {base_url}}"))
+    cli::cli_inform(c("i" = "Downloading from: {.path {file_path}} to: {.path {local_path}}"))
   }
 
   # Construir URL completo do arquivo no servidor WebDAV
@@ -228,8 +217,8 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
     server_path <- glue::glue("{ stringr::str_remove(base_url, '/$') }/{ stringr::str_remove(file_path, '^/') }")
 
     if (verbose) {
-      message("Server Path: ", server_path)
-      message("Local Destination Path: ", local_path)
+      cli::cli_inform(c("i" = "Server Path: {.url {server_path}}"))
+      cli::cli_inform(c("i" = "Local Destination Path: {.path {local_path}}"))
     }
 
     # Criar requisição
@@ -240,21 +229,19 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
 
     if (httr2::resp_status(response) %in% c(200, 201, 204)) {
       if (verbose)
-        message("Resource successfully downloaded from ", server_path)
+        cli::cli_alert_success("Resource successfully downloaded from {.url {server_path}}")
       writeBin(object = httr2::resp_body_raw(response), con = local_path)
       if (verbose)
-        message("Resource successfully written to ", local_path)
+        cli::cli_alert_success("Resource successfully written to {.path {local_path}}")
       return(TRUE)
     } else {
-      stop("Failed to download resource. Server responded with status: ", httr2::resp_status(response))
+      cli::cli_abort("Failed to download resource. Server responded with status: {httr2::resp_status(response)}")
     }
 
   }, error = function(e) {
-    message("Error during the download process: ", e$message)
-    stop("Failed to download resource.")
+    cli::cli_abort("Error during the download process: {e$message}")
   })
 }
-
 
 #' Create a collection (directory) on a WebDAV server
 #'
@@ -293,25 +280,22 @@ webdav_create_directory <- function(base_url, folder_path,
                                     verbose = FALSE) {
 
   if (!curl::has_internet()) {
-    message("No internet connection detected. You need an internet connection to use this function.")
+    cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
     return(invisible(NULL))  # R
   }
 
-  check_and_load_package("httr2")
-  check_and_load_package("glue")
-  check_and_load_package("stringr")
 
   # Validate parameters
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
-    stop("The 'base_url' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg base_url} parameter is required and must be a non-empty string.")
   }
 
   if (missing(folder_path) || !is.character(folder_path) || nchar(folder_path) == 0) {
-    stop("The 'folder_path' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg folder_path} parameter is required and must be a non-empty string.")
   }
 
   if (verbose) {
-    message("Folder path to create: ", folder_path)
+    cli::cli_inform(c("i" = "Folder path to create: {.path {folder_path}}"))
   }
 
   # Create the directory path
@@ -331,15 +315,14 @@ webdav_create_directory <- function(base_url, folder_path,
 
     # Check if the response indicates success
     if (httr2::resp_status(response) %in% c(201, 200)) {
-      message("Collection successfully created at: ", folder_path)
+      cli::cli_alert_success("Collection successfully created at: {.path {folder_path}}")
       return(TRUE)
     } else {
-      stop("Failed to create collection. Server responded with status: ", httr2::resp_status(response))
+      cli::cli_abort("Failed to create collection. Server responded with status: {httr2::resp_status(response)}")
     }
 
   }, error = function(e) {
-    message("Error during directory creation: ", e$message)
-    stop("Failed to create directory.")
+    cli::cli_abort("Error during directory creation: {e$message}")
   })
 }
 
@@ -384,21 +367,18 @@ webdav_upload_file <- function(base_url,
                                verbose = FALSE) {
 
   if (!curl::has_internet()) {
-    message("No internet connection detected. You need an internet connection to use this function.")
+    cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
     return(invisible(NULL))  # R
   }
 
-  check_and_load_package("httr2")
-  check_and_load_package("glue")
-  check_and_load_package("stringr")
 
   # Validate parameters
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
-    stop("The 'base_url' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg base_url} parameter is required and must be a non-empty string.")
   }
 
   if (missing(local_path) || !file.exists(local_path)) {
-    stop("The 'local_path' parameter is required and the file must exist.")
+    cli::cli_abort("The {.arg local_path} parameter is required and the file must exist.")
   }
 
   # Expand and clean local path
@@ -413,8 +393,8 @@ webdav_upload_file <- function(base_url,
   }
 
   if (verbose) {
-    message("Uploading file: ", local_path)
-    message("Target URL: ", path)
+    cli::cli_inform(c("i" = "Uploading file: {.path {local_path}}"))
+    cli::cli_inform(c("i" = "Target URL: {.url {path}}"))
   }
 
   # Try to upload the file
@@ -432,14 +412,14 @@ webdav_upload_file <- function(base_url,
 
     # Check the response for success
     if (httr2::resp_status(response) %in% c(200, 201, 204)) {
-      message("File successfully uploaded to: ", ifelse(is.null(server_path), "root", server_path), "\n")
+      cli::cli_alert_success("File successfully uploaded to: {.path {ifelse(is.null(server_path), 'root', server_path)}}")
       return(TRUE)
     } else {
-      stop("Failed to upload file. Server responded with status: ", httr2::resp_status(response))
+      cli::cli_abort("Failed to upload file. Server responded with status: {httr2::resp_status(response)}")
     }
 
   }, error = function(e) {
-    message("Error uploading the file: ", conditionMessage(e), "\n")
+    cli::cli_warn("Error uploading the file: {conditionMessage(e)}")
     return(FALSE)
   })
 }
@@ -498,22 +478,14 @@ webdav_list_files <- function(
     verbose = FALSE) {
 
   if (!curl::has_internet()) {
-    message("No internet connection detected. You need an internet connection to use this function.")
+    cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
     return(invisible(NULL))  # R
   }
 
 
-  check_and_load_package("httr2")
-  check_and_load_package("xml2")
-  check_and_load_package("stringr")
-  check_and_load_package("dplyr")
-  check_and_load_package("tibble")
-  check_and_load_package("httpuv")
-
-
   # Validate base_url
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
-    stop("The 'base_url' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg base_url} parameter is required and must be a non-empty string.")
   }
 
   # Handle folder_path and construct URL
@@ -524,8 +496,8 @@ webdav_list_files <- function(
   }
 
   if (verbose) {
-    message("Listing files in folder: ", ifelse(is.null(folder_path) || nchar(folder_path) == 0, "root", folder_path))
-    message("Full URL: ", path)
+    cli::cli_inform(c("i" = "Listing files in folder: {.path {ifelse(is.null(folder_path) || nchar(folder_path) == 0, 'root', folder_path)}}"))
+    cli::cli_inform(c("i" = "Full URL: {.url {path}}"))
   }
 
   # Try to list files in the folder
@@ -568,19 +540,18 @@ webdav_list_files <- function(
         slice_tail(n = -1)
 
       if (verbose) {
-        message("Files listed successfully.")
+        cli::cli_alert_success("Files listed successfully.")
       }
       return(contents)
     } else {
-      stop("Failed to list files. Server responded with status: ", httr2::resp_status(response))
+      cli::cli_abort("Failed to list files. Server responded with status: {httr2::resp_status(response)}")
     }
 
   }, error = function(e) {
-    message("Error listing files in the folder: ", conditionMessage(e), "\n")
+    cli::cli_warn("Error listing files in the folder: {conditionMessage(e)}")
     return(NULL)
   })
 }
-
 
 #' Delete a file or directory from the WebDAV server
 #'
@@ -616,29 +587,26 @@ webdav_delete_resource <- function(base_url, resource_path,
                                    verbose = FALSE) {
 
   if (!curl::has_internet()) {
-    message("No internet connection detected. You need an internet connection to use this function.")
+    cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
     return(invisible(NULL))  # R
   }
 
   # Load necessary packages
-  check_and_load_package("httr2")
-  check_and_load_package("glue")
-  check_and_load_package("stringr")
 
   # Validate parameters
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
-    stop("The 'base_url' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg base_url} parameter is required and must be a non-empty string.")
   }
 
   if (missing(resource_path) || !is.character(resource_path) || nchar(resource_path) == 0) {
-    stop("The 'resource_path' parameter is required and must be a non-empty string.")
+    cli::cli_abort("The {.arg resource_path} parameter is required and must be a non-empty string.")
   }
 
   # Construct the full path for the resource
   path <- glue::glue("{ stringr::str_remove(base_url, '/$') }/{ stringr::str_remove(resource_path, '/$') }")
 
   if (verbose) {
-    message("Attempting to delete resource at: ", path)
+    cli::cli_inform(c("i" = "Attempting to delete resource at: {.url {path}}"))
   }
 
   # Create and perform the DELETE request
@@ -652,16 +620,15 @@ webdav_delete_resource <- function(base_url, resource_path,
 
     # Check response and determine success
     if (httr2::resp_status(response) %in% c(200, 204)) {
-      message("Resource successfully deleted at: ", resource_path)
+      cli::cli_alert_success("Resource successfully deleted at: {.path {resource_path}}")
       return(TRUE)
     } else {
-      stop("Failed to delete resource. Server responded with status: ", httr2::resp_status(response))
+      cli::cli_abort("Failed to delete resource. Server responded with status: {httr2::resp_status(response)}")
     }
 
   }, error = function(e) {
-    message("Error deleting the resource: ", conditionMessage(e))
+    cli::cli_warn("Error deleting the resource: {conditionMessage(e)}")
     return(FALSE)
   })
 }
-
 

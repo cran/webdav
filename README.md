@@ -8,7 +8,8 @@
 ![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/webdav)  
 ![CRAN Downloads](https://cranlogs.r-pkg.org/badges/grand-total/webdav)
   ![License](https://img.shields.io/badge/license-MIT-darkviolet.svg) 
-![](https://img.shields.io/badge/devel%20version-0.1.4-blue.svg)
+![Devel
+Badge](https://img.shields.io/badge/devel%20version-0.1.6-blue.svg)
 <!-- badges: end -->
 
 <!-- badger::badge_devel("StrategicProjects/webdav", "blue") -->

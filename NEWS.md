@@ -1,3 +1,30 @@
+# webdav 0.2.0
+
+## Breaking Changes
+
+- `check_and_load_package()` is now deprecated. All required packages are
+  declared in `DESCRIPTION` and loaded automatically by R. Calling this
+  function will issue a deprecation warning.
+
+## Enhancements
+
+- Migrated all user-facing messages from `message()` / `stop()` to the `cli`
+  package (`cli::cli_inform()`, `cli::cli_alert_success()`, `cli::cli_warn()`,
+  `cli::cli_abort()`), providing richer formatted output with semantic markup
+  for URLs, file paths, and argument names.
+- Added `cli` to `Imports` in DESCRIPTION.
+- Added `httr2::resp_status()` import to NAMESPACE.
+- Fixed `handle_response()` to use `httr2::resp_status()` instead of the
+  legacy `response$status_code` accessor (httr v1 syntax).
+- Removed redundant runtime calls to `check_and_load_package()` inside all
+  exported functions — dependencies declared in `Imports` are guaranteed to be
+  available and do not need manual loading.
+
+## Authors
+
+- Added Marcos Wasilew, Carlos Amorin as authors.
+- Fixed Hugo Vasconcelos surname spelling.
+
 # webdav 0.1.6
 
 ## Enhancements
