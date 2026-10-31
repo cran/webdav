@@ -24,7 +24,7 @@ webdav_delete_resource(
 \item{verbose}{Logical value indicating whether to print detailed debug messages. When TRUE, the function outputs additional information about its progress and actions.}
 }
 \value{
-Logical value indicating whether the file or directory was deleted successfully.
+`TRUE` if the file or directory was deleted successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
 }
 \description{
 This function deletes a file or directory on the WebDAV server using the DELETE method. It validates the provided parameters and handles errors during the process.
@@ -40,6 +40,6 @@ test_server <- "http://webdavserver.net/" |>
   try(silent = TRUE)
 
 # Delete a file or directory
-if (class(test_server) != "try-error")
+if (!inherits(test_server, "try-error"))
   webdav_delete_resource(base_url = test_server$url, resource_path = "Notes.txt", verbose = TRUE)
 }

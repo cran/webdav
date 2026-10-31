@@ -1,3 +1,51 @@
+# webdav 0.3.0
+
+## New Features
+
+- New `webdav_move_file()` moves or renames a file or directory on the
+  server using the WebDAV MOVE method, with an `overwrite` argument.
+- `webdav_copy_file()` gained an `overwrite` argument (default `TRUE`,
+  matching the WebDAV protocol default).
+
+## Breaking Changes
+
+- Error handling is now consistent across all functions: invalid arguments
+  raise an error, while network or server failures issue a warning and
+  return `FALSE` (`NULL` for `webdav_list_files()`). Previously,
+  `webdav_copy_file()`, `webdav_download_file()` and
+  `webdav_create_directory()` aborted on server failures.
+- HTTP failures now produce precise messages with the status code and its
+  description (e.g. "423 (Locked)") instead of a generic transport error.
+
+## Bug Fixes
+
+- `webdav_list_files()` no longer fails on R < 4.4.0: the `%||%` operator it
+  relied on only exists in base R from 4.4.0 onward, and the package now
+  carries its own definition.
+- `webdav_list_files()` now returns correct `display_name` values when the
+  listed folder's name contains regex metacharacters (e.g. `"pasta (1)"`);
+  the folder prefix is removed as a fixed string instead of a regex.
+- `webdav_copy_file()` now percent-encodes the `Destination` header, so
+  copying to paths with spaces or non-ASCII characters works. The request
+  URL was already encoded; the header was being sent raw.
+- `webdav_upload_file()` now prints "root" (instead of an empty path) in the
+  success message when uploading to the server root.
+
+## Enhancements
+
+- `webdav_download_file()` streams the response straight to disk (via a
+  temporary file, so a failed request never leaves a partial file behind)
+  instead of loading the whole body into memory, and validates that the
+  destination directory exists.
+- `webdav_upload_file()` streams the file from disk with
+  `httr2::req_body_file()` instead of reading it entirely into memory, and
+  uses `httr2::req_timeout()` for the timeout.
+- The PROPFIND response parser was extracted into an internal function and
+  the package is now covered by offline unit tests (`tests/testthat/`),
+  including ownCloud-style and IIS-style (`isFolder`) fixtures and
+  mocked-request tests for every HTTP verb.
+- Removed `LazyData` from DESCRIPTION (the package has no data directory).
+
 # webdav 0.2.0
 
 ## Breaking Changes
@@ -22,7 +70,7 @@
 
 ## Authors
 
-- Added Marcos Wasilew, Carlos Amorin as authors.
+- Added Marcos Wasiliew, Carlos Amorim as authors.
 - Fixed Hugo Vasconcelos surname spelling.
 
 # webdav 0.1.6

@@ -1,3 +1,7 @@
+# Null-coalescing operator. Base R only ships `%||%` from 4.4.0 on, and the
+# package declares R >= 4.1, so it needs its own definition.
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
 #' Handle HTTP response from Server
 #'
 #' This function processes the response from the WebDAV server, checking for errors.

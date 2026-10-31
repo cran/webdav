@@ -9,7 +9,7 @@
 ![CRAN Downloads](https://cranlogs.r-pkg.org/badges/grand-total/webdav)
   ![License](https://img.shields.io/badge/license-MIT-darkviolet.svg) 
 ![Devel
-Badge](https://img.shields.io/badge/devel%20version-0.1.6-blue.svg)
+Badge](https://img.shields.io/badge/devel%20version-0.3.0-blue.svg)
 <!-- badges: end -->
 
 <!-- badger::badge_devel("StrategicProjects/webdav", "blue") -->
@@ -31,3 +31,60 @@ Some platforms that implement WebDAV are:
     Apache web server.
 4.  **Microsoft SharePoint**: Uses WebDAV for file management over the
     web.
+
+### Installation
+
+Install the released version from CRAN:
+
+``` r
+install.packages("webdav")
+```
+
+Or the development version from GitHub:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("StrategicProjects/webdav")
+```
+
+### Functions
+
+| Function | WebDAV method | Description |
+|----|----|----|
+| `webdav_create_request()` | — | Build an authenticated `httr2` request for the server |
+| `webdav_list_files()` | PROPFIND | List files and folders as a tibble |
+| `webdav_upload_file()` | PUT | Upload a local file (streamed from disk) |
+| `webdav_download_file()` | GET | Download a file (streamed to disk) |
+| `webdav_create_directory()` | MKCOL | Create a collection (directory) |
+| `webdav_copy_file()` | COPY | Copy a resource |
+| `webdav_move_file()` | MOVE | Move or rename a resource |
+| `webdav_delete_resource()` | DELETE | Delete a file or directory |
+
+### Quick start
+
+Credentials default to the `WEBDAV_USERNAME` and `WEBDAV_PASSWORD`
+environment variables (see `vignette("env_variables")`):
+
+``` r
+library(webdav)
+
+base_url <- "https://cloud.example.com/remote.php/dav/files/user"
+
+# List what's there
+webdav_list_files(base_url, folder_path = "Documents")
+
+# Upload, rename, download, clean up
+webdav_upload_file(base_url, local_path = "report.pdf", server_path = "Documents")
+webdav_move_file(base_url,
+                 from_path = "Documents/report.pdf",
+                 to_path = "Documents/report-2026.pdf")
+webdav_download_file(base_url,
+                     file_path = "Documents/report-2026.pdf",
+                     destination_path = tempdir())
+webdav_delete_resource(base_url, resource_path = "Documents/report-2026.pdf")
+```
+
+Invalid arguments raise an error; network or server failures issue a
+warning and return `FALSE` (`NULL` for `webdav_list_files()`), so
+scripts can test the return value instead of wrapping calls in
+`tryCatch()`.

@@ -27,7 +27,7 @@ webdav_download_file(
 \item{verbose}{Logical. If TRUE, prints detailed messages during the download process.}
 }
 \value{
-Logical value indicating whether the file was downloaded successfully.
+`TRUE` if the file was downloaded successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
 }
 \description{
 This function downloads a file from the WebDAV server and saves it to a local directory.
@@ -43,7 +43,7 @@ test_server <- "http://webdavserver.net/" |>
   try(silent = TRUE)
 
 # Download a file from the WebDAV server
-if (class(test_server) != "try-error")
+if (!inherits(test_server, "try-error"))
   webdav_download_file(base_url = test_server$url,
     file_path = "Project.pdf",
     destination_path = tempdir(),

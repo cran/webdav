@@ -12,7 +12,7 @@
 
 <meta name="author" content="André Leite" />
 
-<meta name="date" content="2026-04-07" />
+<meta name="date" content="2026-10-30" />
 
 <title>Using Environment Variables for Security in the webdav Package</title>
 
@@ -342,12 +342,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Using Environment Variables for Security in
 the webdav Package</h1>
 <h4 class="author">André Leite</h4>
-<h4 class="date">2026-04-07</h4>
+<h4 class="date">2026-10-30</h4>
 
 
 
 <p>Why use environment variables? Because <em>hardcoding passwords</em>
 is like leaving your keys under the welcome mat!</p>
+<pre><code>## Warning: pacote &#39;fortunes&#39; foi compilado no R versão 4.6.1</code></pre>
 <blockquote>
 <p>If the answer is parse() you should usually rethink the question. –
 Thomas Lumley R-help (February 2005)</p>
@@ -369,12 +370,12 @@ your password to GitHub like you’re tossing it into the wind!</p>
 <li><p>Open a terminal and find that trusty shell profile (e.g.,
 <code>.bash_profile</code>, <code>.zshrc</code>, or
 <code>.bashrc</code>):</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">nano</span> ~/.bash_profile  <span class="co"># or nano ~/.zshrc for zsh users</span></span></code></pre></div></li>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">nano</span> ~/.bash_profile  <span class="co"># or nano ~/.zshrc for zsh users</span></span></code></pre></div></li>
 <li><p>Stick this magic incantation at the bottom:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="bu">export</span> <span class="va">OWNCLOUD_USERNAME</span><span class="op">=</span><span class="st">&quot;your_username&quot;</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="bu">export</span> <span class="va">OWNCLOUD_PASSWORD</span><span class="op">=</span><span class="st">&quot;your_password&quot;</span></span></code></pre></div></li>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="bu">export</span> <span class="va">OWNCLOUD_USERNAME</span><span class="op">=</span><span class="st">&quot;your_username&quot;</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="bu">export</span> <span class="va">OWNCLOUD_PASSWORD</span><span class="op">=</span><span class="st">&quot;your_password&quot;</span></span></code></pre></div></li>
 <li><p>Save and reload with:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="bu">source</span> ~/.bash_profile  <span class="co"># or source ~/.zshrc</span></span></code></pre></div></li>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="bu">source</span> ~/.bash_profile  <span class="co"># or source ~/.zshrc</span></span></code></pre></div></li>
 </ol>
 <p>Boom! Credentials are safe and sound in the shadows of your terminal.
 You’re now one step closer to keeping your secrets… secret.</p>
@@ -405,8 +406,8 @@ ready to protect your credentials.</p>
 <ol style="list-style-type: decimal">
 <li><p>Create a <code>.Renviron</code> file in your project
 directory:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="va">OWNCLOUD_USERNAME</span><span class="op">=</span>your_username</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="va">OWNCLOUD_PASSWORD</span><span class="op">=</span>your_password</span></code></pre></div></li>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="va">OWNCLOUD_USERNAME</span><span class="op">=</span>your_username</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="va">OWNCLOUD_PASSWORD</span><span class="op">=</span>your_password</span></code></pre></div></li>
 <li><p>Done! These variables will pop up like magic whenever you use R
 in that project.</p></li>
 </ol>
@@ -420,18 +421,18 @@ in that project.</p></li>
 <p>Here’s how you avoid the “hardcoding password trap.” Instead of
 typing <code>username = &quot;secret&quot;</code> like it’s your first day with R,
 grab your credentials with <code>Sys.getenv()</code>:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Keep those secrets safe</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>username <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">&quot;OWNCLOUD_USERNAME&quot;</span>)</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>password <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">&quot;OWNCLOUD_PASSWORD&quot;</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co"># Use them securely in your webdav function calls</span></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="fu">webdav_upload_file</span>(</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">base_url =</span> <span class="st">&quot;https://drive.expresso.pe.gov.br&quot;</span>,</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">file_path =</span> <span class="st">&quot;local_file.txt&quot;</span>,</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="at">server_path =</span> <span class="st">&quot;/Shared/der/app_painel/data/&quot;</span>,</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="at">username =</span> username,</span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="at">password =</span> password</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Keep those secrets safe</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>username <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">&quot;OWNCLOUD_USERNAME&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>password <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">&quot;OWNCLOUD_PASSWORD&quot;</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># Use them securely in your webdav function calls</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="fu">webdav_upload_file</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">base_url =</span> <span class="st">&quot;https://drive.expresso.pe.gov.br&quot;</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">file_path =</span> <span class="st">&quot;local_file.txt&quot;</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="at">server_path =</span> <span class="st">&quot;/Shared/der/app_painel/data/&quot;</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  <span class="at">username =</span> username,</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  <span class="at">password =</span> password</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>)</span></code></pre></div>
 <p>See? No passwords hanging out in your code! It’s like you’re wearing
 an invisible cloak around your credentials.</p>
 </div>
@@ -440,8 +441,8 @@ an invisible cloak around your credentials.</p>
 <p>Don’t be that person who commits their <code>.Renviron</code> file to
 GitHub. Add <code>.Renviron</code> to your <code>.gitignore</code> file
 and keep it safe:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># .gitignore</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="ex">.Renviron</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># .gitignore</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="ex">.Renviron</span></span></code></pre></div>
 <hr />
 <p><strong>R Fortune</strong> references used:</p>
 <ul>

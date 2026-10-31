@@ -38,6 +38,6 @@ test_server <- "http://webdavserver.net/" |>
   try(silent = TRUE)
 
 # Create a request
-if (class(test_server) != "try-error")
+if (!inherits(test_server, "try-error"))
   req <- webdav_create_request(base_url = test_server$url, verbose = TRUE)
 }

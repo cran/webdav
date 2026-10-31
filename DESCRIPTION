@@ -1,14 +1,21 @@
 Package: webdav
 Type: Package
 Title: A Simple Interface for Interacting with 'WebDAV' Servers
-Version: 0.2.0
-Date: 2026-04-07
+Version: 0.3.0
+Date: 2026-10-30
 Authors@R: c(
-    person("Andre", "Leite", email = "leite@castlab.org", role = c("aut", "cre")),
-    person("Marcos", "Wasilew", email = "marcos.wasilew@gmail.com", role = "aut"),
-    person("Hugo", "Vasconcelos", email = "hugo.vasconcelos@ufpe.br", role = "aut"),
-    person("Carlos", "Amorin", email = "carlos.agaf@ufpe.br", role = "aut"),
-    person("Diogo", "Bezerra", email = "diogo.bezerra@ufpe.br", role = "aut"))
+    person("André", "Leite", email = "leite@castlab.org", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-4718-9766")),
+    person("Marcos", "Wasiliew", email = "marcos.wasiliew@gmail.com", role = "aut",
+           comment = c(ORCID = "0009-0004-4694-3159")),
+    person("Hugo", "Vasconcelos", email = "hugo.vasconcelos@ufpe.br", role = "aut",
+           comment = c(ORCID = "0000-0001-6249-0920")),
+    person("Carlos", "Amorim", email = "carlos.agaf@ufpe.br", role = "aut",
+           comment = c(ORCID = "0000-0001-6315-8305")),
+    person("Diogo", "Bezerra", email = "diogo.bezerra@ufpe.br", role = "aut",
+           comment = c(ORCID = "0000-0002-1216-8674")),
+    person("Júlia", "Nascimento Barreto", email = "juliabarreto@gd.seplag.pe.gov.br", role = "aut",
+           comment = c(ORCID = "0009-0004-2851-7770")))
 Description: An easy-to-use interface for interacting with 'WebDAV' servers,
     including 'OwnCloud'. It simplifies the use of 'WebDAV' methods such as COPY, MOVE, DELETE and others. 
     With built-in authentication and request handling, it allows for easy
@@ -19,18 +26,23 @@ Imports: httr2, httpuv, xml2, dplyr, glue, stringr, purrr, tidyr,
 VignetteBuilder: knitr
 License: MIT + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.3.3
 Suggests: testthat (>= 3.0.0), roxygen2, knitr, fortunes, rmarkdown,
-URL: <https://github.com/StrategicProjects/webdav>,
-        <https://strategicprojects.github.io/webdav/>
+        withr
+URL: https://github.com/StrategicProjects/webdav,
+        https://strategicprojects.github.io/webdav/
+BugReports: https://github.com/StrategicProjects/webdav/issues
 Config/Needs/website: tidyverse/tidytemplate
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-04-07 20:00:25 UTC; leite
-Author: Andre Leite [aut, cre],
-  Marcos Wasilew [aut],
-  Hugo Vasconcelos [aut],
-  Carlos Amorin [aut],
-  Diogo Bezerra [aut]
-Maintainer: Andre Leite <leite@castlab.org>
+Packaged: 2026-10-31 01:13:16 UTC; leite
+Author: André Leite [aut, cre] (ORCID: <https://orcid.org/0000-0002-4718-9766>),
+  Marcos Wasiliew [aut] (ORCID: <https://orcid.org/0009-0004-4694-3159>),
+  Hugo Vasconcelos [aut] (ORCID: <https://orcid.org/0000-0001-6249-0920>),
+  Carlos Amorim [aut] (ORCID: <https://orcid.org/0000-0001-6315-8305>),
+  Diogo Bezerra [aut] (ORCID: <https://orcid.org/0000-0002-1216-8674>),
+  Júlia Nascimento Barreto [aut] (ORCID:
+    <https://orcid.org/0009-0004-2851-7770>)
+Maintainer: André Leite <leite@castlab.org>
 Repository: CRAN
-Date/Publication: 2026-04-07 20:20:02 UTC
+Date/Publication: 2026-10-31 10:20:02 UTC

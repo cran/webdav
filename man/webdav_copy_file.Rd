@@ -10,6 +10,7 @@ webdav_copy_file(
   to_path,
   username = Sys.getenv("WEBDAV_USERNAME"),
   password = Sys.getenv("WEBDAV_PASSWORD"),
+  overwrite = TRUE,
   verbose = FALSE
 )
 }
@@ -24,12 +25,31 @@ webdav_copy_file(
 
 \item{password}{The password for WebDAV authentication. Defaults to the "WEBDAV_PASSWORD" environment variable.}
 
+\item{overwrite}{Logical. If TRUE (the default, matching the WebDAV protocol default), an existing resource at `to_path` is overwritten.}
+
 \item{verbose}{Logical. If TRUE, prints detailed messages during the copy process.}
 }
 \value{
-Logical value indicating whether the resource was copied successfully.
+`TRUE` if the resource was copied successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
 }
 \description{
 This function copies a resource from one URI to another on the WebDAV server using the COPY method.
 It validates the provided parameters and handles errors during the copy process.
+}
+\examples{
+# Example usage with a public WebDAV server.
+# Visit test_server$url link to view the results of the operation.
+library(httr2)
+test_server <- "http://webdavserver.net/" |>
+  request() |>
+  req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+  req_perform() |>
+  try(silent = TRUE)
+
+# Copy a file on the WebDAV server
+if (!inherits(test_server, "try-error"))
+  webdav_copy_file(base_url = test_server$url,
+    from_path = "Project.pdf",
+    to_path = "Project-copy.pdf",
+    verbose = TRUE)
 }

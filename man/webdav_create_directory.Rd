@@ -24,7 +24,7 @@ webdav_create_directory(
 \item{verbose}{Logical. If TRUE, prints detailed messages during the directory creation process.}
 }
 \value{
-Logical value indicating whether the collection was created successfully.
+`TRUE` if the collection was created successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
 }
 \description{
 This function creates a collection (directory/folder) on the WebDAV server
@@ -42,6 +42,6 @@ test_server <- "http://webdavserver.net/" |>
   try(silent = TRUE)
 
 # Create a directory on the WebDAV server
-if (class(test_server) != "try-error")
+if (!inherits(test_server, "try-error"))
   webdav_create_directory(base_url = test_server$url, folder_path = "Test_Folder", verbose = TRUE)
 }

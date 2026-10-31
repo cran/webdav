@@ -52,7 +52,7 @@ test_server <- "http://webdavserver.net/" |>
   try(silent = TRUE)
 
 # List files in a directory
-if (class(test_server) != "try-error")
+if (!inherits(test_server, "try-error"))
   webdav_list_files(base_url = test_server$url, folder_path = "Sales/", verbose = TRUE)
 
 }

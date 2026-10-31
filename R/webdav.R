@@ -9,7 +9,7 @@
 #' @param verbose Logical. If TRUE, prints detailed messages during the request creation process.
 #'
 #' @return An `httr2_request` object with authentication and base URL configured, or an error message if the connection fails.
-#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
+#' @importFrom httr2 req_perform req_auth_basic req_headers req_method
 #' @examples
 #' # Example usage with a public WebDAV server.
 #' # Visit test_server$url link to view the results of the operation.
@@ -21,7 +21,7 @@
 #'   try(silent = TRUE)
 #'
 #' # Create a request
-#' if (class(test_server) != "try-error")
+#' if (!inherits(test_server, "try-error"))
 #'   req <- webdav_create_request(base_url = test_server$url, verbose = TRUE)
 #' @export
 webdav_create_request <- function(base_url,
@@ -76,23 +76,40 @@ webdav_create_request <- function(base_url,
 #' @param to_path The destination path where the resource will be copied.
 #' @param username The username for WebDAV authentication. Defaults to the "WEBDAV_USERNAME" environment variable.
 #' @param password The password for WebDAV authentication. Defaults to the "WEBDAV_PASSWORD" environment variable.
+#' @param overwrite Logical. If TRUE (the default, matching the WebDAV protocol default), an existing resource at `to_path` is overwritten.
 #' @param verbose Logical. If TRUE, prints detailed messages during the copy process.
 #'
-#' @return Logical value indicating whether the resource was copied successfully.
-#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
+#' @return `TRUE` if the resource was copied successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
+#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_error
 #' @importFrom glue glue
 #' @importFrom stringr str_remove
+#' @examples
+#' # Example usage with a public WebDAV server.
+#' # Visit test_server$url link to view the results of the operation.
+#' library(httr2)
+#' test_server <- "http://webdavserver.net/" |>
+#'   request() |>
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+#'   req_perform() |>
+#'   try(silent = TRUE)
+#'
+#' # Copy a file on the WebDAV server
+#' if (!inherits(test_server, "try-error"))
+#'   webdav_copy_file(base_url = test_server$url,
+#'     from_path = "Project.pdf",
+#'     to_path = "Project-copy.pdf",
+#'     verbose = TRUE)
 #' @export
 webdav_copy_file <- function(base_url, from_path, to_path,
                              username = Sys.getenv("WEBDAV_USERNAME"),
                              password = Sys.getenv("WEBDAV_PASSWORD"),
+                             overwrite = TRUE,
                              verbose = FALSE) {
 
   if (!curl::has_internet()) {
     cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
-    return(invisible(NULL))  # R
+    return(invisible(FALSE))
   }
-
 
   # Validate parameters
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
@@ -125,24 +142,137 @@ webdav_copy_file <- function(base_url, from_path, to_path,
     # Create the base request using the previously created function
     req <- webdav_create_request(s_path, username, password, verbose)
 
-    # Set the Destination header and use the COPY method
+    # Set the Destination header and use the COPY method. The request URL is
+    # percent-encoded inside webdav_create_request(), so the Destination
+    # header must be encoded the same way.
     req <- req |>
-      httr2::req_headers(Destination = d_path) |>
+      httr2::req_headers(
+        Destination = httpuv::encodeURI(d_path),
+        Overwrite = if (isTRUE(overwrite)) "T" else "F"
+      ) |>
       httr2::req_method("COPY")
 
-    # Perform the request and handle the response
+    # Perform the request; handle HTTP status explicitly instead of letting
+    # httr2 abort, so failures produce a precise message.
     response <- req |>
+      httr2::req_error(is_error = function(resp) FALSE) |>
       httr2::req_perform()
 
-    if (httr2::resp_status(response) %in% c(200, 201, 204)) {
+    status <- httr2::resp_status(response)
+    if (status %in% 200:299) {
       cli::cli_alert_success("Resource successfully copied from {.path {from_path}} to {.path {to_path}}")
-      return(TRUE)
+      TRUE
     } else {
-      cli::cli_abort("Failed to copy resource. Server responded with status: {httr2::resp_status(response)}")
+      cli::cli_warn("Failed to copy resource. Server responded with status {status} ({httr2::resp_status_desc(response)}).")
+      FALSE
     }
 
   }, error = function(e) {
-    cli::cli_abort("Error during the copy process: {e$message}")
+    cli::cli_warn("Error during the copy process: {conditionMessage(e)}")
+    FALSE
+  })
+}
+
+#' Move or rename a resource on the WebDAV server
+#'
+#' This function moves (or renames) a resource from one URI to another on the
+#' WebDAV server using the MOVE method. It validates the provided parameters
+#' and handles errors during the move process.
+#'
+#' @param base_url The base URL of the WebDAV server.
+#' @param from_path The source path of the resource to move.
+#' @param to_path The destination path of the resource. Moving within the same folder renames the resource.
+#' @param username The username for WebDAV authentication. Defaults to the "WEBDAV_USERNAME" environment variable.
+#' @param password The password for WebDAV authentication. Defaults to the "WEBDAV_PASSWORD" environment variable.
+#' @param overwrite Logical. If TRUE (the default, matching the WebDAV protocol default), an existing resource at `to_path` is overwritten.
+#' @param verbose Logical. If TRUE, prints detailed messages during the move process.
+#'
+#' @return `TRUE` if the resource was moved successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
+#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_error
+#' @importFrom glue glue
+#' @importFrom stringr str_remove
+#' @examples
+#' # Example usage with a public WebDAV server.
+#' # Visit test_server$url link to view the results of the operation.
+#' library(httr2)
+#' test_server <- "http://webdavserver.net/" |>
+#'   request() |>
+#'   req_retry(max_tries = 1, max_seconds = 2, backoff =  ~ 1) |>
+#'   req_perform() |>
+#'   try(silent = TRUE)
+#'
+#' # Rename a file on the WebDAV server
+#' if (!inherits(test_server, "try-error"))
+#'   webdav_move_file(base_url = test_server$url,
+#'     from_path = "Notes.txt",
+#'     to_path = "Notes-renamed.txt",
+#'     verbose = TRUE)
+#' @export
+webdav_move_file <- function(base_url, from_path, to_path,
+                             username = Sys.getenv("WEBDAV_USERNAME"),
+                             password = Sys.getenv("WEBDAV_PASSWORD"),
+                             overwrite = TRUE,
+                             verbose = FALSE) {
+
+  if (!curl::has_internet()) {
+    cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
+    return(invisible(FALSE))
+  }
+
+  # Validate parameters
+  if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
+    cli::cli_abort("The {.arg base_url} parameter is required and must be a non-empty string.")
+  }
+
+  if (missing(from_path) || !is.character(from_path) || nchar(from_path) == 0) {
+    cli::cli_abort("The {.arg from_path} parameter is required and must be a non-empty string.")
+  }
+
+  if (missing(to_path) || !is.character(to_path) || nchar(to_path) == 0) {
+    cli::cli_abort("The {.arg to_path} parameter is required and must be a non-empty string.")
+  }
+
+  if (verbose) {
+    cli::cli_inform(c("i" = "Base URL: {.url {base_url}}"))
+    cli::cli_inform(c("i" = "Moving from: {.path {from_path}} to: {.path {to_path}}"))
+  }
+
+  tryCatch({
+    s_path <- glue::glue("{ stringr::str_remove(base_url, '/$') }/{ from_path }")
+    d_path <- glue::glue("{ stringr::str_remove(base_url, '/$') }/{ to_path }")
+
+    if (verbose) {
+      cli::cli_inform(c("i" = "Source Path: {.url {s_path}}"))
+      cli::cli_inform(c("i" = "Destination Path: {.url {d_path}}"))
+    }
+
+    req <- webdav_create_request(s_path, username, password, verbose)
+
+    # The request URL is percent-encoded inside webdav_create_request(), so
+    # the Destination header must be encoded the same way.
+    req <- req |>
+      httr2::req_headers(
+        Destination = httpuv::encodeURI(d_path),
+        Overwrite = if (isTRUE(overwrite)) "T" else "F"
+      ) |>
+      httr2::req_method("MOVE")
+
+    response <- req |>
+      httr2::req_error(is_error = function(resp) FALSE) |>
+      httr2::req_perform()
+
+    status <- httr2::resp_status(response)
+    if (status %in% 200:299) {
+      cli::cli_alert_success("Resource successfully moved from {.path {from_path}} to {.path {to_path}}")
+      TRUE
+    } else {
+      cli::cli_warn("Failed to move resource. Server responded with status {status} ({httr2::resp_status_desc(response)}).")
+      FALSE
+    }
+
+  }, error = function(e) {
+    cli::cli_warn("Error during the move process: {conditionMessage(e)}")
+    FALSE
   })
 }
 
@@ -158,8 +288,8 @@ webdav_copy_file <- function(base_url, from_path, to_path,
 #' @param password The password for WebDAV authentication. Defaults to the "WEBDAV_PASSWORD" environment variable.
 #' @param verbose Logical. If TRUE, prints detailed messages during the download process.
 #'
-#' @return Logical value indicating whether the file was downloaded successfully.
-#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
+#' @return `TRUE` if the file was downloaded successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
+#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_error
 #' @importFrom glue glue
 #' @importFrom stringr str_remove
 #' @examples
@@ -172,7 +302,7 @@ webdav_copy_file <- function(base_url, from_path, to_path,
 #'   try(silent = TRUE)
 #'
 #' # Download a file from the WebDAV server
-#' if (class(test_server) != "try-error")
+#' if (!inherits(test_server, "try-error"))
 #'   webdav_download_file(base_url = test_server$url,
 #'     file_path = "Project.pdf",
 #'     destination_path = tempdir(),
@@ -186,11 +316,10 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
 
   if (!curl::has_internet()) {
     cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
-    return(invisible(NULL))  # R
+    return(invisible(FALSE))
   }
 
-
-  # Validar parâmetros
+  # Validate parameters
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
     cli::cli_abort("The {.arg base_url} parameter is required and must be a non-empty string.")
   }
@@ -199,20 +328,26 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
     cli::cli_abort("The {.arg file_path} parameter is required and must be a non-empty string.")
   }
 
-  # Definir caminho local completo
+  # Build the full local path
   file_name <- basename(file_path)
-  local_path <- if (is.null(destination_path) || nchar(destination_path) == 0) {
-    glue::glue("./{ file_name }") # Diretório atual
+  dest_dir <- if (is.null(destination_path) || nchar(destination_path) == 0) {
+    "."
   } else {
-    glue::glue("{stringr::str_remove(destination_path, '/$')}/{ file_name }")
+    stringr::str_remove(destination_path, "/$")
   }
+
+  if (!dir.exists(dest_dir)) {
+    cli::cli_abort("The destination directory {.path {dest_dir}} does not exist.")
+  }
+
+  local_path <- file.path(dest_dir, file_name)
 
   if (verbose) {
     cli::cli_inform(c("i" = "Base URL: {.url {base_url}}"))
     cli::cli_inform(c("i" = "Downloading from: {.path {file_path}} to: {.path {local_path}}"))
   }
 
-  # Construir URL completo do arquivo no servidor WebDAV
+  # Build the full URL of the file on the WebDAV server
   tryCatch({
     server_path <- glue::glue("{ stringr::str_remove(base_url, '/$') }/{ stringr::str_remove(file_path, '^/') }")
 
@@ -221,25 +356,34 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
       cli::cli_inform(c("i" = "Local Destination Path: {.path {local_path}}"))
     }
 
-    # Criar requisição
     req <- webdav_create_request(server_path, username, password, verbose)
 
-    # Executar requisição
-    response <- httr2::req_perform(req)
+    # Stream the body straight to disk instead of holding it in memory.
+    # Download to a temporary file first so a failed request never leaves a
+    # partial or error-page file at the destination.
+    tmp_path <- tempfile(pattern = paste0(file_name, "-"), tmpdir = dest_dir)
+    on.exit(unlink(tmp_path), add = TRUE)
 
-    if (httr2::resp_status(response) %in% c(200, 201, 204)) {
-      if (verbose)
+    response <- req |>
+      httr2::req_error(is_error = function(resp) FALSE) |>
+      httr2::req_perform(path = tmp_path)
+
+    status <- httr2::resp_status(response)
+    if (status %in% 200:299) {
+      file.rename(tmp_path, local_path)
+      if (verbose) {
         cli::cli_alert_success("Resource successfully downloaded from {.url {server_path}}")
-      writeBin(object = httr2::resp_body_raw(response), con = local_path)
-      if (verbose)
         cli::cli_alert_success("Resource successfully written to {.path {local_path}}")
-      return(TRUE)
+      }
+      TRUE
     } else {
-      cli::cli_abort("Failed to download resource. Server responded with status: {httr2::resp_status(response)}")
+      cli::cli_warn("Failed to download resource. Server responded with status {status} ({httr2::resp_status_desc(response)}).")
+      FALSE
     }
 
   }, error = function(e) {
-    cli::cli_abort("Error during the download process: {e$message}")
+    cli::cli_warn("Error during the download process: {conditionMessage(e)}")
+    FALSE
   })
 }
 
@@ -254,8 +398,8 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
 #' @param password The password for WebDAV authentication. Defaults to the "WEBDAV_PASSWORD" environment variable.
 #' @param verbose Logical. If TRUE, prints detailed messages during the directory creation process.
 #'
-#' @return Logical value indicating whether the collection was created successfully.
-#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
+#' @return `TRUE` if the collection was created successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
+#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_error
 #' @importFrom glue glue
 #' @importFrom httpuv encodeURI
 #' @importFrom stringr str_remove
@@ -271,7 +415,7 @@ webdav_download_file <- function(base_url, file_path, destination_path = ".",
 #'   try(silent = TRUE)
 #'
 #' # Create a directory on the WebDAV server
-#' if (class(test_server) != "try-error")
+#' if (!inherits(test_server, "try-error"))
 #'   webdav_create_directory(base_url = test_server$url, folder_path = "Test_Folder", verbose = TRUE)
 #' @export
 webdav_create_directory <- function(base_url, folder_path,
@@ -281,9 +425,8 @@ webdav_create_directory <- function(base_url, folder_path,
 
   if (!curl::has_internet()) {
     cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
-    return(invisible(NULL))  # R
+    return(invisible(FALSE))
   }
-
 
   # Validate parameters
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
@@ -309,20 +452,22 @@ webdav_create_directory <- function(base_url, folder_path,
     req <- req |>
       httr2::req_method("MKCOL")
 
-    # Perform the request and handle the response
     response <- req |>
+      httr2::req_error(is_error = function(resp) FALSE) |>
       httr2::req_perform()
 
-    # Check if the response indicates success
-    if (httr2::resp_status(response) %in% c(201, 200)) {
+    status <- httr2::resp_status(response)
+    if (status %in% 200:299) {
       cli::cli_alert_success("Collection successfully created at: {.path {folder_path}}")
-      return(TRUE)
+      TRUE
     } else {
-      cli::cli_abort("Failed to create collection. Server responded with status: {httr2::resp_status(response)}")
+      cli::cli_warn("Failed to create collection. Server responded with status {status} ({httr2::resp_status_desc(response)}).")
+      FALSE
     }
 
   }, error = function(e) {
-    cli::cli_abort("Error during directory creation: {e$message}")
+    cli::cli_warn("Error during directory creation: {conditionMessage(e)}")
+    FALSE
   })
 }
 
@@ -338,8 +483,8 @@ webdav_create_directory <- function(base_url, folder_path,
 #' @param timeout The timeout for the upload request in seconds (default is 300 seconds).
 #' @param verbose Logical value indicating whether to print detailed debug messages. When TRUE, the function outputs additional information about its progress and actions.
 #'
-#' @return Logical value indicating whether the file was uploaded successfully.
-#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
+#' @return `TRUE` if the file was uploaded successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
+#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_file req_timeout req_error
 #' @importFrom glue glue
 #' @importFrom stringr str_remove str_trim
 #' @examples
@@ -355,7 +500,7 @@ webdav_create_directory <- function(base_url, folder_path,
 #' # Upload a file
 #' file_test <- tempfile(pattern = "teste_", fileext = ".txt")
 #' cat("Text file content", file = file_test)
-#' if (class(test_server) != "try-error")
+#' if (!inherits(test_server, "try-error"))
 #'   webdav_upload_file(base_url = test_server$url, local_path = file_test, verbose = TRUE)
 #' @export
 webdav_upload_file <- function(base_url,
@@ -368,9 +513,8 @@ webdav_upload_file <- function(base_url,
 
   if (!curl::has_internet()) {
     cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
-    return(invisible(NULL))  # R
+    return(invisible(FALSE))
   }
-
 
   # Validate parameters
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
@@ -399,28 +543,29 @@ webdav_upload_file <- function(base_url,
 
   # Try to upload the file
   tryCatch({
-    raw_file <- readBin(local_path, what = "raw", n = file.info(local_path)$size)
-
+    # req_body_file() streams the file from disk instead of loading it
+    # entirely into memory.
     req <- webdav_create_request(path, username, password, verbose) |>
-      httr2::req_body_raw(raw_file) |>
+      httr2::req_body_file(local_path) |>
       httr2::req_method("PUT") |>
-      httr2::req_options(timeout = timeout)
+      httr2::req_timeout(timeout)
 
-    # Perform the upload request
     response <- req |>
+      httr2::req_error(is_error = function(resp) FALSE) |>
       httr2::req_perform()
 
-    # Check the response for success
-    if (httr2::resp_status(response) %in% c(200, 201, 204)) {
-      cli::cli_alert_success("File successfully uploaded to: {.path {ifelse(is.null(server_path), 'root', server_path)}}")
-      return(TRUE)
+    status <- httr2::resp_status(response)
+    if (status %in% 200:299) {
+      cli::cli_alert_success("File successfully uploaded to: {.path {if (is.null(server_path) || nchar(server_path) == 0) 'root' else server_path}}")
+      TRUE
     } else {
-      cli::cli_abort("Failed to upload file. Server responded with status: {httr2::resp_status(response)}")
+      cli::cli_warn("Failed to upload file. Server responded with status {status} ({httr2::resp_status_desc(response)}).")
+      FALSE
     }
 
   }, error = function(e) {
     cli::cli_warn("Error uploading the file: {conditionMessage(e)}")
-    return(FALSE)
+    FALSE
   })
 }
 
@@ -445,13 +590,13 @@ webdav_upload_file <- function(base_url,
 #'   \item{is_folder}{Logical indicating whether the resource is a directory.}
 #' }
 #' Returns `NULL` if an error occurs during the execution of the function.
-#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
+#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_error
 #' @importFrom glue glue
-#' @importFrom dplyr filter mutate select arrange slice_tail first
+#' @importFrom dplyr mutate slice_tail first
 #' @importFrom tidyr replace_na
 #' @importFrom purrr map_dfr
-#' @importFrom stringr str_detect str_remove
-#' @importFrom xml2 read_xml xml_find_all xml_text
+#' @importFrom stringr str_remove
+#' @importFrom xml2 read_xml xml_find_all
 #' @importFrom httpuv encodeURI decodeURI
 #' @importFrom tibble tibble
 #' @examples
@@ -465,7 +610,7 @@ webdav_upload_file <- function(base_url,
 #'   try(silent = TRUE)
 #'
 #' # List files in a directory
-#' if (class(test_server) != "try-error")
+#' if (!inherits(test_server, "try-error"))
 #'   webdav_list_files(base_url = test_server$url, folder_path = "Sales/", verbose = TRUE)
 #'
 #' @export
@@ -506,51 +651,63 @@ webdav_list_files <- function(
       httr2::req_method("PROPFIND") |>
       httr2::req_headers("Depth" = as.character(depth))
 
-    # Perform the request
     response <- req |>
+      httr2::req_error(is_error = function(resp) FALSE) |>
       httr2::req_perform()
 
     # Handle response and parse XML
-    if (httr2::resp_status(response) < 400) {
-      ##### https://github.com/StrategicProjects/webdav/issues/1
-      ##### Code from Benjamin Buchwitz (bchwtz) patch
-      content <- response |> httr2::resp_body_string()
-      xml_content <- xml2::read_xml(content)
-
-      ns <- xml2::xml_ns(xml_content)
-      xml_prefix <- names(ns[ns == "DAV:"])
-
-      webdav_list <- xml_content |>
-        xml2::xml_find_all(glue::glue(".//{ xml_prefix }:response"), ns, flatten = FALSE) |>
-        xml2::as_list()
-
-      # Process and filter files, skipping the first entry (root or folder itself)
-      contents <- purrr::map_dfr(webdav_list, function(x) {
-        props <- x$propstat$prop
-        tibble(
-          full_path = httpuv::decodeURI(x$href[[1]]) %||% NA_character_,
-          creation_date = props$creationdate[[1]] %||% NA_character_,
-          last_modified = props$getlastmodified[[1]] %||% NA_character_,
-          content_length = as.numeric(props$getcontentlength[[1]] %||% NA),
-          is_folder = !is.null(props$resourcetype$collection) || props$isFolder[[1]] %in% c("1", "t")
-        )
-      }) |>
-        mutate(is_folder = tidyr::replace_na(is_folder, FALSE)) |>
-        mutate(display_name = stringr::str_remove(full_path, dplyr::first(full_path)), .before = full_path) |>
-        slice_tail(n = -1)
+    status <- httr2::resp_status(response)
+    if (status < 400) {
+      contents <- parse_propfind_response(httr2::resp_body_string(response))
 
       if (verbose) {
         cli::cli_alert_success("Files listed successfully.")
       }
-      return(contents)
+      contents
     } else {
-      cli::cli_abort("Failed to list files. Server responded with status: {httr2::resp_status(response)}")
+      cli::cli_warn("Failed to list files. Server responded with status {status} ({httr2::resp_status_desc(response)}).")
+      NULL
     }
 
   }, error = function(e) {
     cli::cli_warn("Error listing files in the folder: {conditionMessage(e)}")
-    return(NULL)
+    NULL
   })
+}
+
+# Parse a PROPFIND multistatus response body into a tibble, skipping the
+# first entry (the folder itself).
+##### https://github.com/StrategicProjects/webdav/issues/1
+##### Code from Benjamin Buchwitz (bchwtz) patch
+parse_propfind_response <- function(content) {
+  xml_content <- xml2::read_xml(content)
+
+  ns <- xml2::xml_ns(xml_content)
+  xml_prefix <- names(ns[ns == "DAV:"])
+
+  webdav_list <- xml_content |>
+    xml2::xml_find_all(glue::glue(".//{ xml_prefix }:response"), ns, flatten = FALSE) |>
+    xml2::as_list()
+
+  purrr::map_dfr(webdav_list, function(x) {
+    props <- x$propstat$prop
+    tibble(
+      full_path = httpuv::decodeURI(x$href[[1]]) %||% NA_character_,
+      creation_date = props$creationdate[[1]] %||% NA_character_,
+      last_modified = props$getlastmodified[[1]] %||% NA_character_,
+      content_length = as.numeric(props$getcontentlength[[1]] %||% NA),
+      # isFolder is a Microsoft extension; absent on most servers, so the
+      # subscript yields NULL and %in% a zero-length logical — isTRUE()
+      # keeps the result a scalar FALSE instead of NA.
+      is_folder = !is.null(props$resourcetype$collection) ||
+        isTRUE(props$isFolder[[1]] %in% c("1", "t"))
+    )
+  }) |>
+    mutate(is_folder = tidyr::replace_na(is_folder, FALSE)) |>
+    # fixed(): the folder's own path is a literal prefix, not a regex —
+    # names with "(", "+", etc. must not be interpreted as metacharacters.
+    mutate(display_name = stringr::str_remove(full_path, stringr::fixed(dplyr::first(full_path))), .before = full_path) |>
+    slice_tail(n = -1)
 }
 
 #' Delete a file or directory from the WebDAV server
@@ -563,8 +720,8 @@ webdav_list_files <- function(
 #' @param password The password for WebDAV authentication. Defaults to the "WEBDAV_PASSWORD" environment variable.
 #' @param verbose Logical value indicating whether to print detailed debug messages. When TRUE, the function outputs additional information about its progress and actions.
 #'
-#' @return Logical value indicating whether the file or directory was deleted successfully.
-#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_body_raw req_options
+#' @return `TRUE` if the file or directory was deleted successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
+#' @importFrom httr2 req_perform req_auth_basic req_headers req_method req_error
 #' @importFrom glue glue
 #' @importFrom stringr str_remove
 #' @examples
@@ -578,7 +735,7 @@ webdav_list_files <- function(
 #'   try(silent = TRUE)
 #'
 #' # Delete a file or directory
-#' if (class(test_server) != "try-error")
+#' if (!inherits(test_server, "try-error"))
 #'   webdav_delete_resource(base_url = test_server$url, resource_path = "Notes.txt", verbose = TRUE)
 #' @export
 webdav_delete_resource <- function(base_url, resource_path,
@@ -588,10 +745,8 @@ webdav_delete_resource <- function(base_url, resource_path,
 
   if (!curl::has_internet()) {
     cli::cli_warn("No internet connection detected. You need an internet connection to use this function.")
-    return(invisible(NULL))  # R
+    return(invisible(FALSE))
   }
-
-  # Load necessary packages
 
   # Validate parameters
   if (missing(base_url) || !is.character(base_url) || nchar(base_url) == 0) {
@@ -614,21 +769,22 @@ webdav_delete_resource <- function(base_url, resource_path,
     req <- webdav_create_request(path, username, password, verbose) |>
       httr2::req_method("DELETE")
 
-    # Perform the request
     response <- req |>
+      httr2::req_error(is_error = function(resp) FALSE) |>
       httr2::req_perform()
 
-    # Check response and determine success
-    if (httr2::resp_status(response) %in% c(200, 204)) {
+    status <- httr2::resp_status(response)
+    if (status %in% 200:299) {
       cli::cli_alert_success("Resource successfully deleted at: {.path {resource_path}}")
-      return(TRUE)
+      TRUE
     } else {
-      cli::cli_abort("Failed to delete resource. Server responded with status: {httr2::resp_status(response)}")
+      cli::cli_warn("Failed to delete resource. Server responded with status {status} ({httr2::resp_status_desc(response)}).")
+      FALSE
     }
 
   }, error = function(e) {
     cli::cli_warn("Error deleting the resource: {conditionMessage(e)}")
-    return(FALSE)
+    FALSE
   })
 }
 

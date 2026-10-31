@@ -30,7 +30,7 @@ webdav_upload_file(
 \item{verbose}{Logical value indicating whether to print detailed debug messages. When TRUE, the function outputs additional information about its progress and actions.}
 }
 \value{
-Logical value indicating whether the file was uploaded successfully.
+`TRUE` if the file was uploaded successfully, `FALSE` (with a warning) otherwise. Invalid arguments raise an error.
 }
 \description{
 This function uploads a file to a specific folder on the WebDAV server. It validates the provided parameters and handles errors during the process.
@@ -48,6 +48,6 @@ test_server <- "http://webdavserver.net/" |>
 # Upload a file
 file_test <- tempfile(pattern = "teste_", fileext = ".txt")
 cat("Text file content", file = file_test)
-if (class(test_server) != "try-error")
+if (!inherits(test_server, "try-error"))
   webdav_upload_file(base_url = test_server$url, local_path = file_test, verbose = TRUE)
 }
